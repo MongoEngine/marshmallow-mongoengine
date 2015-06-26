@@ -38,7 +38,7 @@ setup(
     version=__version__,
     description='Mongoengine integration with the marshmallow '
                 '(de)serialization library',
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     author='Emmanuel Leblond',
     author_email='emmanuel.leblond@gmail.com',
     url='https://github.com/touilleMan/marshmallow-mongoengine',
