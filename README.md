@@ -3,7 +3,8 @@
 ## Introduction
 
 Mongoengine integration with the marshmallow (de)serialization library.
-Heavilly ~~ripped~~ inspired by [http://marshmallow-sqlalchemy.rtfd.org/](marshmallow-sqlalchemy)
+
+Heavilly ~~ripped~~ inspired by [marshmallow-sqlalchemy](http://marshmallow-sqlalchemy.rtfd.org/)
 
 ## Declare your models
 
