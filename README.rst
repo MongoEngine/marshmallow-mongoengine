@@ -1,12 +1,10 @@
-=======================
-marshmallow-mongoengine
-=======================
-
-
 .. image:: https://travis-ci.org/touilleMan/marshmallow-mongoengine.svg?branch=master
     :target: https://travis-ci.org/touilleMan/marshmallow-mongoengine
     :alt: Travis-CI
 
+=======================
+marshmallow-mongoengine
+=======================
 
 `Mongoengine <http://mongoengine.org>`_ integration with the  `marshmallow <https://marshmallow.readthedocs.org/en/latest/>`_ (de)serialization library.
 
