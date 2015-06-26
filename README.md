@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/touilleMan/marshmallow-mongoengine.svg?branch=master)](https://travis-ci.org/touilleMan/marshmallow-mongoengine)
+
 # Marshmallow-Mongoengine
 
 ## Introduction
