@@ -4,10 +4,11 @@ import functools
 
 import marshmallow as ma
 import mongoengine as me
-from marshmallow import validate, fields
+# from marshmallow import validate
 from marshmallow.compat import text_type
 
 from marshmallow_mongoengine.exceptions import ModelConversionError
+from marshmallow_mongoengine.conversion import fields
 
 
 def get_pk_from_identity(obj):
@@ -96,18 +97,15 @@ class ModelConverter(object):
         return result
 
     def convert_field(self, field_me, keygetter=None, instance=True, **kwargs):
-        field_ma_cls = self._get_field_class_for_data_type(field_me)
+        field_builder = fields.get_field_builder_for_data_type(field_me)
         if not instance:
-            return field_ma_cls
-        field_kwargs = self._get_field_kwargs_from_mongo(
-            field_me, keygetter=keygetter
-        )
-        field_kwargs.update(kwargs)
-        return field_ma_cls(**field_kwargs)
+            return field_builder.marshmallow_field_cls
+        return field_builder.build_marshmallow_field(**kwargs)
 
     def field_for(self, model, property_name, **kwargs):
         field_me = getattr(model, property_name)
-        pass
+        field_builder = fields.get_field_builder_for_data_type(field_me)
+        return field_builder.build_marshmallow_field(**kwargs)
 
     def _get_field_class_for_data_type(self, field_me):
         field_ma_cls = None
@@ -127,47 +125,47 @@ class ModelConverter(object):
                     'Could not find field column of type {0}.'.format(types[0]))
         return field_ma_cls
 
-    def _get_field_kwargs_from_mongo(self, field_me, keygetter=None):
-        kwargs = self.get_base_kwargs()
-        # import pdb; pdb.set_trace()
-        # if column.nullable:
-        #     kwargs['allow_none'] = True
+    # def _get_field_kwargs_from_mongo(self, field_me, keygetter=None):
+    #     kwargs = self.get_base_kwargs()
+    #     # import pdb; pdb.set_trace()
+    #     # if column.nullable:
+    #     #     kwargs['allow_none'] = True
 
-        # if hasattr(column.type, 'enums'):
-        if getattr(field_me, 'choices', None):
-            kwargs['validate'].append(validate.OneOf(choices=field_me.choices))
+    #     # if hasattr(column.type, 'enums'):
+    #     if getattr(field_me, 'choices', None):
+    #         kwargs['validate'].append(validate.OneOf(choices=field_me.choices))
 
-        # Add a length validator for max_length/min_length
-        maxmin_args = {}
-        if hasattr(field_me, 'max_length'):
-            maxmin_args['max'] = field_me.max_length
-        if hasattr(field_me, 'min_length'):
-            maxmin_args['min'] = field_me.min_length
-        if maxmin_args:
-            kwargs['validate'].append(validate.Length(**maxmin_args))
-        if hasattr(field_me, 'null'):
-            kwargs['allow_none'] = True
+    #     # Add a length validator for max_length/min_length
+    #     maxmin_args = {}
+    #     if hasattr(field_me, 'max_length'):
+    #         maxmin_args['max'] = field_me.max_length
+    #     if hasattr(field_me, 'min_length'):
+    #         maxmin_args['min'] = field_me.min_length
+    #     if maxmin_args:
+    #         kwargs['validate'].append(validate.Length(**maxmin_args))
+    #     if hasattr(field_me, 'null'):
+    #         kwargs['allow_none'] = True
 
-        # if hasattr(column.type, 'scale'):
-        #     kwargs['places'] = getattr(column.type, 'scale', None)
+    #     # if hasattr(column.type, 'scale'):
+    #     #     kwargs['places'] = getattr(column.type, 'scale', None)
 
-        # Primary keys are dump_only ("read-only")
-        if getattr(field_me, 'primary_key', False):
-            kwargs['dump_only'] = True
+    #     # Primary keys are dump_only ("read-only")
+    #     if getattr(field_me, 'primary_key', False):
+    #         kwargs['dump_only'] = True
 
-        # if hasattr(prop, 'columns'):
-        #     column = prop.columns[0]
-        #     self._add_column_kwargs(kwargs, column)
-        # if hasattr(prop, 'direction'):  # Relationship property
-        #     self._add_relationship_kwargs(kwargs, prop, session=session, keygetter=keygetter)
-        if getattr(field_me, 'help_text', None):  # Useful for documentation generation
-            kwargs['description'] = field_me.help_text
-        return kwargs
+    #     # if hasattr(prop, 'columns'):
+    #     #     column = prop.columns[0]
+    #     #     self._add_column_kwargs(kwargs, column)
+    #     # if hasattr(prop, 'direction'):  # Relationship property
+    #     #     self._add_relationship_kwargs(kwargs, prop, session=session, keygetter=keygetter)
+    #     if getattr(field_me, 'help_text', None):  # Useful for documentation generation
+    #         kwargs['description'] = field_me.help_text
+    #     return kwargs
 
-    def get_base_kwargs(self):
-        return {
-            'validate': []
-        }
+    # def get_base_kwargs(self):
+    #     return {
+    #         'validate': []
+    #     }
 
 default_converter = ModelConverter()
 

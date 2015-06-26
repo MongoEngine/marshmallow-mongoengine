@@ -14,6 +14,7 @@ from marshmallow_mongoengine.convert import (
     field_for,
 )
 from marshmallow_mongoengine.exceptions import ModelConversionError
+import marshmallow_mongoengine.fields
 
 __version__ = '0.1.0'
 __license__ = 'MIT'
@@ -28,4 +29,5 @@ __all__ = [
     'get_pk_from_identity',
     'ModelConversionError',
     'field_for',
+    'fields',
 ]

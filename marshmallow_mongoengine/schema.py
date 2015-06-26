@@ -26,8 +26,13 @@ class SchemaOpts(ma.SchemaOpts):
         self.keygetter = getattr(meta, 'keygetter', get_pk_from_identity)
         self.model_converter = getattr(meta, 'model_converter', ModelConverter)
 
+
 class SchemaMeta(ma.schema.SchemaMeta):
     """Metaclass for `ModelSchema`."""
+
+    def __init__(self, *args, **kwargs):
+        # import pdb; pdb.set_trace()
+        super().__init__(*args, **kwargs)
 
     # override SchemaMeta
     @classmethod

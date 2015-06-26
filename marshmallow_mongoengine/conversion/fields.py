@@ -1,72 +1,128 @@
 import inspect
+import functools
 
+import marshmallow as ma
+import mongoengine as me
+
+from marshmallow_mongoengine import fields as ma_fields
 from marshmallow_mongoengine.conversion import params
+from marshmallow_mongoengine.exceptions import ModelConversionError
 
 
-class MetaField(object):
-    AVAILABLE_PARAMS = (,)
-    MONGO_FIELD_CLS = None
+class MetaFieldBuilder(object):
+    BASE_AVAILABLE_PARAMS = (params.DescriptionParam, params.AllowNoneParam, params.ChoiceParam)
+    AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = None
 
     def __init__(self, field):
+        self.AVAILABLE_PARAMS += self.BASE_AVAILABLE_PARAMS
+        self.mongoengine_field = field
         self.params = [paramCls(field) for paramCls in self.AVAILABLE_PARAMS]
 
-    def build_field(self):
-        kwargs = {}
+    def build_marshmallow_field(self, **kwargs):
+        field_kwargs = None
         for param in self.params:
-            param.apply(kwargs)
-        return self.MONGO_FIELD_CLS(**kwargs)
+            field_kwargs = param.apply(field_kwargs)
+        field_kwargs.update(kwargs)
+        return self.marshmallow_field_cls(**field_kwargs)
 
-    def _get_field(self):
+    def _get_marshmallow_field_cls(self):
         return self.MARSHMALLOW_FIELD_CLS
 
     @property
-    def field(self):
-        return self._get_field()
+    def marshmallow_field_cls(self):
+        return self._get_marshmallow_field_cls()
 
 
-class Integer(MetaField):
-    AVAILABLE_PARAMS = (params.MaxMinParam,)
-    MONGO_FIELD_CLS = me.fields.IntField
-    MARSHMALLOW_FIELD_CLS = ma.fields.Integer
+class IntegerBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = (params.SizeParam,)
+    MARSHMALLOW_FIELD_CLS = ma_fields.Integer
+
+
+class FloatBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = (params.SizeParam,)
+    MARSHMALLOW_FIELD_CLS = ma_fields.Float
+
+
+class DecimalBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = (params.SizeParam,)
+    MARSHMALLOW_FIELD_CLS = ma_fields.Decimal
+
+
+class StringBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = (params.LenghtParam,)
+    MARSHMALLOW_FIELD_CLS = ma_fields.String
+
+
+class ListBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = (params.LenghtParam,)
+    MARSHMALLOW_FIELD_CLS = ma_fields.List
+
+    def _get_marshmallow_field_cls(self):
+        sub_field = get_field_builder_for_data_type(self.mongoengine_field.field)
+        return functools.partial(
+            self.MARSHMALLOW_FIELD_CLS,
+            sub_field.build_marshmallow_field()
+        )
+
+
+class ReferenceBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Reference
+
+    def _get_marshmallow_field_cls(self):
+        return functools.partial(
+            self.MARSHMALLOW_FIELD_CLS,
+            self.mongoengine_field.document_type
+        )
+
+
+class DateTimeBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.DateTime
+
+
+class BooleanBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Boolean
 
 
 FIELD_MAPPING = {
-    me.fields.BinaryField: Integer,
-    # me.fields.BooleanField: ma.fields.Boolean,
-    # me.fields.ComplexDateTimeField: ma.fields.DateTime,
-    # me.fields.DateTimeField: ma.fields.DateTime,
-    # me.fields.DecimalField: ma.fields.Decimal,
-    # # me.fields.DictField: ma.fields.Dict,
-    # # me.fields.DynamicField: ma.fields.Dynamic,
-    # # me.fields.EmailField: ma.fields.Email,
-    # # me.fields.EmbeddedDocumentField: ma.fields.EmbeddedDocument,
-    # # me.fields.FileField: ma.fields.File,
-    # me.fields.FloatField: ma.fields.Float,
-    # # me.fields.GenericEmbeddedDocumentField: ma.fields.GenericEmbeddedDocument,
-    # # me.fields.GenericReferenceField: ma.fields.GenericReference,
-    # # me.fields.GeoPointField: ma.fields.GeoPoint,
-    # # me.fields.ImageField: ma.fields.Image,
-    # me.fields.IntField: ma.fields.Integer,
-    # me.fields.ListField: _list_field_factory,
-    # # me.fields.MapField: ma.fields.Map,
-    # me.fields.ObjectIdField: ma.fields.String,
-    # me.fields.ReferenceField: _reference_field_factory,
-    # me.fields.SequenceField: ma.fields.Integer,  # TODO: handle value_decorator
-    # me.fields.SortedListField: _list_field_factory,
-    # me.fields.StringField: ma.fields.String,
-    # # me.fields.URLField: ma.fields.URL,
-    # me.fields.UUIDField: ma.fields.UUID,
-    # # me.fields.PointField: ma.fields.Point,
-    # # me.fields.LineStringField: ma.fields.LineString,
-    # # me.fields.PolygonField: ma.fields.Polygon,
-    # # me.fields.MultiPointField: ma.fields.MultiPoint,
-    # # me.fields.MultiLineStringField: ma.fields.MultiLineString,
-    # # me.fields.MultiPolygonField: ma.fields.MultiPolygon,
+    me.fields.BinaryField: IntegerBuilder,
+    me.fields.BooleanField: BooleanBuilder,
+    me.fields.ComplexDateTimeField: DateTimeBuilder,
+    me.fields.DateTimeField: DateTimeBuilder,
+    me.fields.DecimalField: DecimalBuilder,
+    # # me.fields.DictField: ma_fields.Dict,
+    # # me.fields.DynamicField: ma_fields.Dynamic,
+    # # me.fields.EmailField: ma_fields.Email,
+    # # me.fields.EmbeddedDocumentField: ma_fields.EmbeddedDocument,
+    # # me.fields.FileField: ma_fields.File,
+    me.fields.FloatField: FloatBuilder,
+    # # me.fields.GenericEmbeddedDocumentField: ma_fields.GenericEmbeddedDocument,
+    # # me.fields.GenericReferenceField: ma_fields.GenericReference,
+    # # me.fields.GeoPointField: ma_fields.GeoPoint,
+    # # me.fields.ImageField: ma_fields.Image,
+    me.fields.IntField: IntegerBuilder,
+    me.fields.ListField: ListBuilder,
+    # # me.fields.MapField: ma_fields.Map,
+    me.fields.ObjectIdField: StringBuilder,
+    me.fields.ReferenceField: ReferenceBuilder,
+    me.fields.SequenceField: IntegerBuilder,  # TODO: handle value_decorator
+    me.fields.SortedListField: ListBuilder,
+    me.fields.StringField: StringBuilder,
+    # # me.fields.URLField: ma_fields.URL,
+    # me.fields.UUIDField: ma_fields.UUID,
+    # # me.fields.PointField: ma_fields.Point,
+    # # me.fields.LineStringField: ma_fields.LineString,
+    # # me.fields.PolygonField: ma_fields.Polygon,
+    # # me.fields.MultiPointField: ma_fields.MultiPoint,
+    # # me.fields.MultiLineStringField: ma_fields.MultiLineString,
+    # # me.fields.MultiPolygonField: ma_fields.MultiPolygon,
 }
 
 
-def get_field_class_for_data_type(self, field_me):
+def get_field_builder_for_data_type(field_me):
     field_cls = None
     field_me_types = inspect.getmro(type(field_me))
     for field_me_type in field_me_types:
@@ -75,11 +131,11 @@ def get_field_class_for_data_type(self, field_me):
             break
     else:
         raise ModelConversionError(
-            'Could not find field column of type {0}.'.format(types[0]))
+            'Could not find field column of type {0}.'.format(field_me))
         # # Try to find a field class based on the column's python_type
         # if field_me.python_type in me.Schema.TYPE_MAPPING:
         #     field_cls = ma.Schema.TYPE_MAPPING[field_me.python_type]
         # else:
         #     raise ModelConversionError(
         #         'Could not find field column of type {0}.'.format(types[0]))
-    return field_ma_cls
+    return field_ma_cls(field_me)

@@ -2,18 +2,27 @@
 from __future__ import absolute_import
 import datetime as dt
 import decimal
+from datetime import datetime
 
 import mongoengine as me
 
-from marshmallow import fields, validate
+from marshmallow import validate
 
 import pytest
 from marshmallow_mongoengine import (
-    fields_for_model, ModelSchema, ModelConverter, convert_field, field_for
+    fields, fields_for_model, ModelSchema, ModelConverter, convert_field, field_for
 )
 
 
-me.connect('marshmallow_mongoengine-test')
+TEST_DB = 'marshmallow_mongoengine-test'
+db = me.connect(TEST_DB)
+
+
+class BaseTest(object):
+    @classmethod
+    def setup_method(self, method):
+        # Reset database from previous test run
+        db.drop_database(TEST_DB)
 
 
 def contains_validator(field, v_type):
@@ -31,13 +40,6 @@ class AnotherIntegerField(me.IntField):
 @pytest.fixture()
 def models():
 
-    # # models adapted from https://github.com/wtforms/wtforms-sqlalchemy/blob/master/tests/tests.py
-    # student_course = sa.Table(
-    #     'student_course', Base.metadata,
-    #     sa.Column('student_id', sa.Integer, sa.ForeignKey('student.id')),
-    #     sa.Column('course_id', sa.Integer, sa.ForeignKey('course.id'))
-    # )
-
     class Course(me.Document):
         id = me.IntField(primary_key=True)
         name = me.StringField()
@@ -48,29 +50,20 @@ def models():
         has_prereqs = me.BooleanField()
         started = me.DateTimeField()
         grade = AnotherIntegerField()
-
-        @property
-        def url(self):
-            return '/courses/{}'.format(self.id)
+        students = me.ListField(me.ReferenceField('Student'))
 
     class School(me.Document):
         name = me.StringField()
-
-        @property
-        def url(self):
-            return '/schools/{}'.format(self.id)
+        students = me.ListField(me.ReferenceField('Student'))
 
     class Student(me.Document):
         full_name = me.StringField(max_length=255, unique=True, default='noname')
+        age = me.IntField(min_value=0, max_value=99)
         dob = me.DateTimeField(null=True)
         date_created = me.DateTimeField(default=dt.datetime.utcnow,
                 help_text='date the student was created')
         current_school = me.ReferenceField('School')
         courses = me.ListField(me.ReferenceField('Course'))
-
-        @property
-        def url(self):
-            return '/students/{}'.format(self.id)
 
     # So that we can access models with dot-notation, e.g. models.Course
     class _models(object):
@@ -79,10 +72,6 @@ def models():
             self.School = School
             self.Student = Student
     return _models()
-
-
-def hyperlink_keygetter(obj):
-    return obj.url
 
 
 @pytest.fixture()
@@ -99,29 +88,23 @@ def schemas(models):
         class Meta:
             model = models.Student
 
-    class HyperlinkStudentSchema(ModelSchema):
-        class Meta:
-            model = models.Student
-            keygetter = hyperlink_keygetter
-
     # Again, so we can use dot-notation
     class _schemas(object):
         def __init__(self):
             self.CourseSchema = CourseSchema
             self.SchoolSchema = SchoolSchema
             self.StudentSchema = StudentSchema
-            self.HyperlinkStudentSchema = HyperlinkStudentSchema
     return _schemas()
 
 
-class TestModelFieldConversion:
+class TestModelFieldConversion(BaseTest):
 
     def test_fields_for_model_types(self, models):
         fields_ = fields_for_model(models.Student)
         assert type(fields_['id']) is fields.Str
         assert type(fields_['full_name']) is fields.Str
         assert type(fields_['dob']) is fields.DateTime
-        # assert type(fields_['current_school']) is fields.Int
+        assert type(fields_['current_school']) is fields.Reference
         assert type(fields_['date_created']) is fields.DateTime
 
     def test_fields_for_model_handles_custom_types(self, models):
@@ -149,269 +132,134 @@ class TestModelFieldConversion:
         assert validator
         assert validator.choices == ('Primary', 'Secondary')
 
-    def test_many_to_many_relationship(self, models):
+    def test_list_of_references(self, models):
         student_fields = fields_for_model(models.Student)
-        assert type(student_fields['courses']) is fields.QuerySelectList
+        assert type(student_fields['courses']) is fields.List
+        assert type(student_fields['courses'].container) is fields.Reference
 
         course_fields = fields_for_model(models.Course)
-        assert type(course_fields['students']) is fields.QuerySelectList
+        assert type(course_fields['students']) is fields.List
+        assert type(course_fields['students'].container) is fields.Reference
 
-    def test_many_to_one_relationship(self, models):
+    def test_reference(self, models):
         student_fields = fields_for_model(models.Student)
-        assert type(student_fields['current_school']) is fields.QuerySelect
+        assert type(student_fields['current_school']) is fields.Reference
 
-        school_fields = fields_for_model(models.School)
-        assert type(school_fields['students']) is fields.QuerySelectList
+        course_fields = fields_for_model(models.Course)
+        assert type(course_fields['id']) is fields.Int
 
-    def test_custom_keygetter(self, models):
-        student_fields = fields_for_model(
-            models.Student,
-            keygetter=hyperlink_keygetter
-        )
-        assert student_fields['current_school'].keygetter == hyperlink_keygetter
 
-    def test_include_fk(self, models):
-        student_fields = fields_for_model(models.Student, include_fk=False)
-        assert 'current_school_id' not in student_fields
-
-        student_fields2 = fields_for_model(models.Student, include_fk=True)
-        assert 'current_school_id' in student_fields2
-
-def make_property(*column_args, **column_kwargs):
-    return column_property(sa.Column(*column_args, **column_kwargs))
-
-class TestPropertyFieldConversion:
-
-    @pytest.fixture()
-    def converter(self):
-        return ModelConverter()
-
-    def test_convert_String(self, converter):
-        prop = make_property(sa.String())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_Unicode(self, converter):
-        prop = make_property(sa.Unicode())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_Binary(self, converter):
-        prop = make_property(sa.Binary())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_LargeBinary(self, converter):
-        prop = make_property(sa.LargeBinary())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_Text(self, converter):
-        prop = make_property(sa.types.Text())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_Date(self, converter):
-        prop = make_property(sa.Date())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Date
-
-    def test_convert_DateTime(self, converter):
-        prop = make_property(sa.DateTime())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.DateTime
-
-    def test_convert_Boolean(self, converter):
-        prop = make_property(sa.Boolean())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Boolean
-
-    def test_convert_primary_key(self, converter):
-        prop = make_property(sa.Integer, primary_key=True)
-        field = converter.convert_field(prop)
-        assert field.dump_only is True
-
-    def test_convert_Numeric(self, converter):
-        prop = make_property(sa.Numeric(scale=2))
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Decimal
-        assert field.places == decimal.Decimal((0, (1,), -2))
-
-    def test_convert_Float(self, converter):
-        prop = make_property(sa.Float(scale=2))
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Float
-
-    def test_convert_SmallInteger(self, converter):
-        prop = make_property(sa.SmallInteger())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Int
-
-    def test_convert_UUID(self, converter):
-        prop = make_property(postgresql.UUID())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.UUID
-
-    def test_convert_MACADDR(self, converter):
-        prop = make_property(postgresql.MACADDR())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_INET(self, converter):
-        prop = make_property(postgresql.INET())
-        field = converter.convert_field(prop)
-        assert type(field) == fields.Str
-
-    def test_convert_ARRAY_String(self, converter):
-        prop = make_property(postgresql.ARRAY(sa.String()))
-        field = converter.convert_field(prop)
-        assert type(field) == fields.List
-        assert type(field.container) == fields.Str
-
-    def test_convert_ARRAY_Integer(self, converter):
-        prop = make_property(postgresql.ARRAY(sa.Integer))
-        field = converter.convert_field(prop)
-        assert type(field) == fields.List
-        assert type(field.container) == fields.Int
-
-class TestPropToFieldClass:
-
-    def convert_test_field(self):
-        prop = make_property(sa.Integer())
-        field = convert_field(prop, instance=True)
-
-        assert type(field) == fields.Int
-
-        field_cls = convert_field(prop, instance=False)
-        assert field_cls == fields.Int
-
-    def test_can_pass_extra_kwargs(self):
-        prop = make_property(sa.String())
-        field = convert_field(prop, instance=True, description='just a string')
-        assert field.metadata['description'] == 'just a string'
-
-class TestColumnToFieldClass:
-
-    def test_column2field(self):
-        column = sa.Column(sa.String(255))
-        field = column2field(column, instance=True)
-
-        assert type(field) == fields.String
-
-        field_cls = column2field(column, instance=False)
-        assert field_cls == fields.String
-
-    def test_can_pass_extra_kwargs(self):
-        column = sa.Column(sa.String(255))
-        field = column2field(column, instance=True, description='just a string')
-        assert field.metadata['description'] == 'just a string'
-
-class TestFieldFor:
+class TestFieldFor(BaseTest):
 
     def test_field_for(self, models):
         field = field_for(models.Student, 'full_name')
         assert type(field) == fields.Str
 
         field = field_for(models.Student, 'current_school')
-        assert type(field) == fields.QuerySelect
+        assert type(field) == fields.Reference
 
-class TestModelSchema:
 
-    @pytest.fixture()
-    def school(self, models, session):
-        school_ = models.School(name='Univ. Of Whales')
-        session.add(school_)
+class TestModelSchema(BaseTest):
+
+    @pytest.fixture
+    def school(self, models):
+        school_ = models.School(name='Univ. Of Whales').save()
         return school_
 
-    @pytest.fixture()
-    def student(self, models, school, session):
-        student_ = models.Student(full_name='Monty Python', current_school=school)
-        session.add(student_)
+    @pytest.fixture
+    def student(self, models, school):
+        student_ = models.Student(full_name='Monty Python', current_school=school).save()
         return student_
 
-    def test_model_schema_dumping(self, schemas, student, session):
-        session.commit()
+    def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()
         result = schema.dump(student)
-        # fk excluded by default
-        assert 'current_school_id' not in result.data
+        assert not result.errors
+        for field in ('id', 'full_name', 'age'):
+            result.data.get(field, '<not_set>') == getattr(student, field)
         # related field dumps to pk
-        assert result.data['current_school'] == student.current_school.id
+        assert result.data['current_school'] == str(student.current_school.pk)
 
-    def test_model_schema_overridden_keygeter(self, schemas, student, session):
-        session.commit()
-        schema = schemas.HyperlinkStudentSchema()
-        result = schema.dump(student)
-        assert result.data['current_school'] == student.current_school.url
+    def test_model_schema_bad_loading(self, models, schemas, school):
+        schema = schemas.StudentSchema()
+        default_payload = {'full_name': 'John Doe', 'age': 25, 'dob': None,
+                           'date_created': datetime.utcnow().isoformat(),
+                           'current_school': str(school.pk)}
+        # Make sure default_payload is valid
+        result = schema.load(default_payload)
+        assert not result.errors
+        for key, value in (
+                ('current_school', 'not an objectId'), ('current_school', None),
+                ('current_school', '5578726b7a58012298a5a7e2'),
+                ('age', 100), ('age', 'nan'),
+            ):
+            payload = default_payload.copy()
+            payload[key] = value
+            result = schema.load(payload)
+            assert result.errors, (key, value)
 
-    def test_model_schema_loading(self, models, schemas, student, session):
-        session.commit()
+    def test_model_schema_loading(self, models, schemas, student):
         schema = schemas.StudentSchema()
         dump_data = schema.dump(student).data
-        result = schema.load(dump_data)
-
+        result = schema.load({k: v for k, v in dump_data.items()
+                              if v is not None})
         assert type(result.data) == models.Student
-        assert result.data.id is None
+        assert result.data.current_school == student.current_school
+        result.data.age = 25
+        result.data.save()
+        student.reload()
+        assert student.age == 25
 
-    def test_fields_option(self, student, models, session):
+    def test_fields_option(self, student, models):
         class StudentSchema(ModelSchema):
             class Meta:
                 model = models.Student
-                sqla_session = session
                 fields = ('full_name', 'date_created')
 
-        session.commit()
         schema = StudentSchema()
         data, errors = schema.dump(student)
-
         assert 'full_name' in data
         assert 'date_created' in data
         assert 'dob' not in data
+        assert 'age' not in data
+        assert 'id' not in data
         assert len(data.keys()) == 2
 
-    def test_exclude_option(self, student, models, session):
+    def test_exclude_option(self, student, models):
         class StudentSchema(ModelSchema):
             class Meta:
                 model = models.Student
-                sqla_session = session
                 exclude = ('date_created', )
 
-        session.commit()
         schema = StudentSchema()
         data, errors = schema.dump(student)
-
         assert 'full_name' in data
+        assert 'id' in data
+        assert 'age' in data
+        assert 'dob' in data
         assert 'date_created' not in data
 
-    def test_additional_option(self, student, models, session):
+    def test_additional_option(self, student, models):
         class StudentSchema(ModelSchema):
             uppername = fields.Function(lambda x: x.full_name.upper())
 
             class Meta:
                 model = models.Student
-                sqla_session = session
                 additional = ('date_created', )
-
-        session.commit()
         schema = StudentSchema()
         data, errors = schema.dump(student)
         assert 'full_name' in data
         assert 'uppername' in data
         assert data['uppername'] == student.full_name.upper()
 
-    def test_field_override(self, student, models, session):
+    def test_field_override(self, student, models):
         class MyString(fields.Str):
             def _serialize(self, val, attr, obj):
                 return val.upper()
-
         class StudentSchema(ModelSchema):
             full_name = MyString()
-
             class Meta:
                 model = models.Student
-                sqla_session = session
-
-        session.commit()
         schema = StudentSchema()
         data, errors = schema.dump(student)
         assert 'full_name' in data
