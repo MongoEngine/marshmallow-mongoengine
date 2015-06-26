@@ -1,0 +1,10 @@
+invoke
+flake8
+
+# testing
+pytest
+tox>=1.5.0
+mock
+
+# packaging
+wheel
