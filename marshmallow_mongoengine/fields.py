@@ -2,7 +2,7 @@ from marshmallow import ValidationError
 from marshmallow.fields import Field
 from mongoengine import ValidationError as MongoValidationError
 # Republishing the default fields...
-from marshmallow.fields import *
+from marshmallow.fields import *  # flake8: noqa
 
 
 # ...and add custom ones for mongoengine
@@ -13,7 +13,7 @@ class Reference(Field):
 
     def __init__(self, document_cls, *args, **kwargs):
         self.document_cls = document_cls
-        super().__init__(*args, **kwargs)
+        super(Reference, self).__init__(*args, **kwargs)
 
     def _deserialize(self, value):
         try:

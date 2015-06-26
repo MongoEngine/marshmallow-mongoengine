@@ -1,7 +1,6 @@
 import inspect
 import functools
 
-import marshmallow as ma
 import mongoengine as me
 
 from marshmallow_mongoengine import fields as ma_fields
@@ -10,7 +9,8 @@ from marshmallow_mongoengine.exceptions import ModelConversionError
 
 
 class MetaFieldBuilder(object):
-    BASE_AVAILABLE_PARAMS = (params.DescriptionParam, params.AllowNoneParam, params.ChoiceParam)
+    BASE_AVAILABLE_PARAMS = (params.DescriptionParam, params.AllowNoneParam,
+                             params.ChoiceParam)
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = None
 
@@ -59,7 +59,8 @@ class ListBuilder(MetaFieldBuilder):
     MARSHMALLOW_FIELD_CLS = ma_fields.List
 
     def _get_marshmallow_field_cls(self):
-        sub_field = get_field_builder_for_data_type(self.mongoengine_field.field)
+        sub_field = get_field_builder_for_data_type(
+            self.mongoengine_field.field)
         return functools.partial(
             self.MARSHMALLOW_FIELD_CLS,
             sub_field.build_marshmallow_field()
@@ -99,7 +100,8 @@ FIELD_MAPPING = {
     # # me.fields.EmbeddedDocumentField: ma_fields.EmbeddedDocument,
     # # me.fields.FileField: ma_fields.File,
     me.fields.FloatField: FloatBuilder,
-    # # me.fields.GenericEmbeddedDocumentField: ma_fields.GenericEmbeddedDocument,
+    # # me.fields.GenericEmbeddedDocumentField:
+    #    ma_fields.GenericEmbeddedDocument,
     # # me.fields.GenericReferenceField: ma_fields.GenericReference,
     # # me.fields.GeoPointField: ma_fields.GeoPoint,
     # # me.fields.ImageField: ma_fields.Image,
@@ -123,7 +125,6 @@ FIELD_MAPPING = {
 
 
 def get_field_builder_for_data_type(field_me):
-    field_cls = None
     field_me_types = inspect.getmro(type(field_me))
     for field_me_type in field_me_types:
         if field_me_type in FIELD_MAPPING:
@@ -132,10 +133,4 @@ def get_field_builder_for_data_type(field_me):
     else:
         raise ModelConversionError(
             'Could not find field column of type {0}.'.format(field_me))
-        # # Try to find a field class based on the column's python_type
-        # if field_me.python_type in me.Schema.TYPE_MAPPING:
-        #     field_cls = ma.Schema.TYPE_MAPPING[field_me.python_type]
-        # else:
-        #     raise ModelConversionError(
-        #         'Could not find field column of type {0}.'.format(types[0]))
     return field_ma_cls(field_me)

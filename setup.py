@@ -36,7 +36,8 @@ def read(fname):
 setup(
     name='marshmallow-mongoengine',
     version=__version__,
-    description='Mongoengine integration with the marshmallow (de)serialization library',
+    description='Mongoengine integration with the marshmallow '
+                '(de)serialization library',
     long_description=read('README.md'),
     author='Emmanuel Leblond',
     author_email='emmanuel.leblond@gmail.com',

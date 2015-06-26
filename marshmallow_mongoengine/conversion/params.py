@@ -26,7 +26,7 @@ class MetaParam(object):
 
 class LenghtParam(MetaParam):
     def __init__(self, field_me):
-        super().__init__()
+        super(LenghtParam, self).__init__()
         # Add a length validator for max_length/min_length
         maxmin_args = {}
         if hasattr(field_me, 'max_length'):
@@ -38,7 +38,7 @@ class LenghtParam(MetaParam):
 
 class SizeParam(MetaParam):
     def __init__(self, field_me):
-        super().__init__()
+        super(SizeParam, self).__init__()
         # Add a length validator for max_length/min_length
         maxmin_args = {}
         if hasattr(field_me, 'max_value'):
@@ -50,7 +50,7 @@ class SizeParam(MetaParam):
 
 class DescriptionParam(MetaParam):
     def __init__(self, field_me):
-        super().__init__()
+        super(DescriptionParam, self).__init__()
         description = getattr(field_me, 'help_text', None)
         if description:
             self.field_kwargs['description'] = description
@@ -58,7 +58,7 @@ class DescriptionParam(MetaParam):
 
 class AllowNoneParam(MetaParam):
     def __init__(self, field_me):
-        super().__init__()
+        super(AllowNoneParam, self).__init__()
         allow_none = getattr(field_me, 'null', None)
         if allow_none:
             self.field_kwargs['allow_none'] = True
@@ -66,7 +66,7 @@ class AllowNoneParam(MetaParam):
 
 class ChoiceParam(MetaParam):
     def __init__(self, field_me):
-        super().__init__()
+        super(ChoiceParam, self).__init__()
         choices = getattr(field_me, 'choices', None)
         if choices:
             self.field_kwargs['validate'].append(validate.OneOf(choices))

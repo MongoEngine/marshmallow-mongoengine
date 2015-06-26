@@ -9,9 +9,8 @@ import mongoengine as me
 from marshmallow import validate
 
 import pytest
-from marshmallow_mongoengine import (
-    fields, fields_for_model, ModelSchema, ModelConverter, convert_field, field_for
-)
+from marshmallow_mongoengine import (fields, fields_for_model, ModelSchema,
+                                     ModelConverter, convert_field, field_for)
 
 
 TEST_DB = 'marshmallow_mongoengine-test'
