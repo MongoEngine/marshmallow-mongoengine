@@ -69,4 +69,4 @@ Get it now
 License
 =======
 
-MIT licensed. See the bundled `LICENSE <https://github.com/touilleMan/marshmallow-mongoengine/blob/dev/LICENSE>`_ file for more details.
+MIT licensed. See the bundled `LICENSE <https://github.com/touilleMan/marshmallow-mongoengine/blob/master/LICENSE>`_ file for more details.
