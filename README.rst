@@ -1,6 +1,6 @@
-**********************
+=======================
 marshmallow-mongoengine
-**********************
+=======================
 
 
 .. image:: https://travis-ci.org/touilleMan/marshmallow-mongoengine.svg?branch=master
