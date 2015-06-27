@@ -1,4 +1,4 @@
-from marshmallow import ValidationError
+from marshmallow import ValidationError, missing
 from marshmallow.fields import Field
 from mongoengine import ValidationError as MongoValidationError
 # Republishing the default fields...
@@ -32,3 +32,15 @@ class Reference(Field):
         if value is None:
             return None
         return str(value.pk)
+
+
+class Skip(Field):
+    """
+    Marshmallow custom field that just ignore the current field
+    """
+
+    def _deserialize(self, value):
+        return missing
+
+    def _serialize(self, value, attr, obj):
+        return missing

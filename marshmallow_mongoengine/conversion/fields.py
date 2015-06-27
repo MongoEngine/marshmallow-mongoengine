@@ -88,23 +88,54 @@ class BooleanBuilder(MetaFieldBuilder):
     MARSHMALLOW_FIELD_CLS = ma_fields.Boolean
 
 
+class DictBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Raw
+
+
+class EmbeddedDocumentBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Nested
+
+    def _get_marshmallow_field_cls(self):
+        # Recursive build of marshmallow schema
+        from marshmallow_mongoengine.schema import ModelSchema
+        class NestedSchema(ModelSchema):
+            class Meta:
+                model = self.mongoengine_field.document_type
+        return functools.partial(
+            self.MARSHMALLOW_FIELD_CLS,
+            NestedSchema
+        )
+
+
+class DynamicBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Raw
+
+
+class SkipBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Skip
+
+
 FIELD_MAPPING = {
     me.fields.BinaryField: IntegerBuilder,
     me.fields.BooleanField: BooleanBuilder,
     me.fields.ComplexDateTimeField: DateTimeBuilder,
     me.fields.DateTimeField: DateTimeBuilder,
     me.fields.DecimalField: DecimalBuilder,
-    # # me.fields.DictField: ma_fields.Dict,
-    # # me.fields.DynamicField: ma_fields.Dynamic,
-    # # me.fields.EmailField: ma_fields.Email,
-    # # me.fields.EmbeddedDocumentField: ma_fields.EmbeddedDocument,
-    # # me.fields.FileField: ma_fields.File,
+    me.fields.DictField: DictBuilder,
+    me.fields.DynamicField: DynamicBuilder,
+    me.fields.EmailField: StringBuilder,
+    me.fields.EmbeddedDocumentField: EmbeddedDocumentBuilder,
     me.fields.FloatField: FloatBuilder,
     # # me.fields.GenericEmbeddedDocumentField:
     #    ma_fields.GenericEmbeddedDocument,
     # # me.fields.GenericReferenceField: ma_fields.GenericReference,
-    # # me.fields.GeoPointField: ma_fields.GeoPoint,
-    # # me.fields.ImageField: ma_fields.Image,
+    # FilesField and ImageField can't be simply displayed...
+    me.fields.FileField: SkipBuilder,
+    me.fields.ImageField: SkipBuilder,
     me.fields.IntField: IntegerBuilder,
     me.fields.ListField: ListBuilder,
     # # me.fields.MapField: ma_fields.Map,
@@ -113,14 +144,16 @@ FIELD_MAPPING = {
     me.fields.SequenceField: IntegerBuilder,  # TODO: handle value_decorator
     me.fields.SortedListField: ListBuilder,
     me.fields.StringField: StringBuilder,
-    # # me.fields.URLField: ma_fields.URL,
+    me.fields.URLField: StringBuilder,
+    # TODO: finish fields...
     # me.fields.UUIDField: ma_fields.UUID,
-    # # me.fields.PointField: ma_fields.Point,
-    # # me.fields.LineStringField: ma_fields.LineString,
-    # # me.fields.PolygonField: ma_fields.Polygon,
-    # # me.fields.MultiPointField: ma_fields.MultiPoint,
-    # # me.fields.MultiLineStringField: ma_fields.MultiLineString,
-    # # me.fields.MultiPolygonField: ma_fields.MultiPolygon,
+    # me.fields.PointField: ma_fields.Point,
+    # me.fields.GeoPointField: ma_fields.GeoPoint,
+    # me.fields.LineStringField: ma_fields.LineString,
+    # me.fields.PolygonField: ma_fields.Polygon,
+    # me.fields.MultiPointField: ma_fields.MultiPoint,
+    # me.fields.MultiLineStringField: ma_fields.MultiLineString,
+    # me.fields.MultiPolygonField: ma_fields.MultiPolygon,
 }
 
 
@@ -132,5 +165,5 @@ def get_field_builder_for_data_type(field_me):
             break
     else:
         raise ModelConversionError(
-            'Could not find field column of type {0}.'.format(field_me))
+            'Could not find field of type {0}.'.format(field_me))
     return field_ma_cls(field_me)

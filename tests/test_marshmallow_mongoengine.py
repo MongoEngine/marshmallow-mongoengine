@@ -39,6 +39,9 @@ class AnotherIntegerField(me.IntField):
 @pytest.fixture()
 def models():
 
+    class HeadTeacher(me.EmbeddedDocument):
+        full_name = me.StringField(max_length=255, unique=True, default='noname')
+
     class Course(me.Document):
         id = me.IntField(primary_key=True)
         name = me.StringField()
@@ -46,7 +49,7 @@ def models():
         cost = me.IntField()
         description = me.StringField()
         level = me.StringField(choices=('Primary', 'Secondary'))
-        has_prereqs = me.BooleanField()
+        prereqs = me.DictField()
         started = me.DateTimeField()
         grade = AnotherIntegerField()
         students = me.ListField(me.ReferenceField('Student'))
@@ -54,10 +57,11 @@ def models():
     class School(me.Document):
         name = me.StringField()
         students = me.ListField(me.ReferenceField('Student'))
+        headteacher = me.EmbeddedDocumentField(HeadTeacher)
 
     class Student(me.Document):
         full_name = me.StringField(max_length=255, unique=True, default='noname')
-        age = me.IntField(min_value=0, max_value=99)
+        age = me.IntField(min_value=10, max_value=99)
         dob = me.DateTimeField(null=True)
         date_created = me.DateTimeField(default=dt.datetime.utcnow,
                 help_text='date the student was created')
@@ -67,6 +71,7 @@ def models():
     # So that we can access models with dot-notation, e.g. models.Course
     class _models(object):
         def __init__(self):
+            self.HeadTeacher = HeadTeacher
             self.Course = Course
             self.School = School
             self.Student = Student
@@ -106,6 +111,14 @@ class TestModelFieldConversion(BaseTest):
         assert type(fields_['current_school']) is fields.Reference
         assert type(fields_['date_created']) is fields.DateTime
 
+    def test_dict_field(self, models):
+        fields_ = fields_for_model(models.Course)
+        assert type(fields_['prereqs']) is fields.Raw
+
+    def test_embedded_document_field(self, models):
+        fields_ = fields_for_model(models.School)
+        assert type(fields_['headteacher']) is fields.Nested
+
     def test_fields_for_model_handles_custom_types(self, models):
         fields_ = fields_for_model(models.Course)
         assert type(fields_['grade']) is fields.Int
@@ -120,6 +133,11 @@ class TestModelFieldConversion(BaseTest):
         validator = contains_validator(fields_['full_name'], validate.Length)
         assert validator
         assert validator.max == 255
+        validator = contains_validator(fields_['age'], validate.Range)
+        assert validator
+        assert validator.max == 99
+        assert validator.min == 10
+
 
     def test_sets_allow_none_for_nullable_fields(self, models):
         fields_ = fields_for_model(models.Student)
@@ -162,13 +180,34 @@ class TestModelSchema(BaseTest):
 
     @pytest.fixture
     def school(self, models):
-        school_ = models.School(name='Univ. Of Whales').save()
+        headteacher = models.HeadTeacher(full_name='John Doe')
+        school_ = models.School(name='Univ. Of Whales',
+                                headteacher=headteacher).save()
         return school_
 
     @pytest.fixture
     def student(self, models, school):
         student_ = models.Student(full_name='Monty Python', current_school=school).save()
         return student_
+
+    @pytest.fixture
+    def course(self, models, student):
+        course = models.Course(id=4,
+                               name='History of painting',
+                               cost=100,
+                               level='Primary',
+                               prereqs={
+                                    'age': 15,
+                                    'knowledges': ['Painting', 'History'],
+                                    'teachers': {
+                                        'main': 'Mrs. Kensington',
+                                        'assistant': 'Mr. Black'
+                                    }
+                                },
+                               started=datetime(2015, 9, 22),
+                               grade=3,
+                               students=[student]).save()
+        return course
 
     def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()
@@ -199,15 +238,41 @@ class TestModelSchema(BaseTest):
 
     def test_model_schema_loading(self, models, schemas, student):
         schema = schemas.StudentSchema()
-        dump_data = schema.dump(student).data
-        result = schema.load({k: v for k, v in dump_data.items()
+        dump = schema.dump(student)
+        assert not dump.errors
+        load = schema.load({k: v for k, v in dump.data.items()
                               if v is not None})
-        assert type(result.data) == models.Student
-        assert result.data.current_school == student.current_school
-        result.data.age = 25
-        result.data.save()
+        assert not load.errors
+        assert type(load.data) == models.Student
+        assert load.data.current_school == student.current_school
+        load.data.age = 25
+        load.data.save()
         student.reload()
         assert student.age == 25
+
+    def test_model_schema_loading_school(self, models, schemas, school):
+        schema = schemas.SchoolSchema()
+        dump = schema.dump(school)
+        assert not dump.errors
+        load = schema.load({k: v for k, v in dump.data.items()
+                            if v is not None})
+        assert not load.errors
+        assert type(load.data) == models.School
+        # Check embedded document
+        assert type(load.data.headteacher) == models.HeadTeacher
+        assert load.data.headteacher.full_name == school.headteacher.full_name
+
+    def test_model_schema_loading_course(self, models, schemas, course):
+        schema = schemas.CourseSchema()
+        dump = schema.dump(course)
+        assert not dump.errors
+        load = schema.load({k: v for k, v in dump.data.items()
+                            if v is not None})
+        assert not load.errors
+        assert type(load.data) == models.Course
+        # Check dict field
+        assert isinstance(load.data.prereqs, dict)
+        assert load.data.prereqs == course.prereqs
 
     def test_fields_option(self, student, models):
         class StudentSchema(ModelSchema):
