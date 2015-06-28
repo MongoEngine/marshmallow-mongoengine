@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import inspect
+from functools import partial
 
 import marshmallow as ma
 from marshmallow.compat import with_metaclass
-
 from marshmallow_mongoengine.convert import ModelConverter
 
 
@@ -13,6 +13,8 @@ class SchemaOpts(ma.SchemaOpts):
 
     - ``model``: The Mongoengine Document model to generate the `Schema`
         from (required).
+    - ``model_fields_kwargs``: Dict of {field: kwargs} to provide as
+        additionals argument during fields creation.
     - ``model_converter``: `ModelConverter` class to use for converting the
         Mongoengine Document model to marshmallow fields.
     """
@@ -20,14 +22,12 @@ class SchemaOpts(ma.SchemaOpts):
     def __init__(self, meta):
         super(SchemaOpts, self).__init__(meta)
         self.model = getattr(meta, 'model', None)
+        self.model_fields_kwargs = getattr(meta, 'model_fields_kwargs', {})
         self.model_converter = getattr(meta, 'model_converter', ModelConverter)
 
 
 class SchemaMeta(ma.schema.SchemaMeta):
     """Metaclass for `ModelSchema`."""
-
-    def __init__(self, *args, **kwargs):
-        super(SchemaMeta, self).__init__(*args, **kwargs)
 
     # override SchemaMeta
     @classmethod
@@ -45,6 +45,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
                 declared_fields = converter.fields_for_model(
                     opts.model,
                     fields=opts.fields,
+                    fields_kwargs=opts.model_fields_kwargs
                 )
                 break
         base_fields = super(SchemaMeta, mcs).get_declared_fields(

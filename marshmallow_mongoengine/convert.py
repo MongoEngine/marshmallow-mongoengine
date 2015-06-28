@@ -14,12 +14,16 @@ class ModelConverter(object):
     corresponding marshmallow `Fields <marshmallow.fields.Field>`.
     """
 
-    def fields_for_model(self, model, fields=None):
+    def fields_for_model(self, model, fields_kwargs=None, fields=None):
         result = {}
         for field_name, field_me in model._fields.items():
             if fields and field_name not in fields:
                 continue
-            field_ma_cls = self.convert_field(field_me)
+            if fields_kwargs and field_name in fields_kwargs:
+                field_ma_cls = self.convert_field(field_me,
+                                                  **fields_kwargs[field_name])
+            else:
+                field_ma_cls = self.convert_field(field_me)
             if field_ma_cls:
                 result[field_name] = field_ma_cls
         return result
@@ -52,6 +56,7 @@ convert_field = default_converter.convert_field
 """Convert a Mongoengine `Filed` to a field instance or class.
 
 :param Property field_me: Mongoengine Field Property.
+:param fields_kwargs: Dict of per-field kwargs to pass at field creation.
 :param bool instance: If `True`, return  `Field` instance, computing
     relevant kwargs from the given property. If `False`, return
     the `Field` class.
