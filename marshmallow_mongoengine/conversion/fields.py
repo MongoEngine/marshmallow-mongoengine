@@ -100,6 +100,7 @@ class EmbeddedDocumentBuilder(MetaFieldBuilder):
     def _get_marshmallow_field_cls(self):
         # Recursive build of marshmallow schema
         from marshmallow_mongoengine.schema import ModelSchema
+
         class NestedSchema(ModelSchema):
             class Meta:
                 model = self.mongoengine_field.document_type
