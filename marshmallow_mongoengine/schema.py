@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import inspect
-from functools import partial
 
 import marshmallow as ma
 from marshmallow.compat import with_metaclass
