@@ -33,7 +33,7 @@ def contains_validator(field, v_type):
 
 class TestFields(BaseTest):
 
-    def test_field_files(self):
+    def test_FileField(self):
         class File(me.Document):
             name = me.StringField(primary_key=True)
             file = me.FileField()
@@ -75,7 +75,7 @@ class TestFields(BaseTest):
         assert not load.errors
         assert load.data.data == data
 
-    def test_field_dynamic(self):
+    def test_DynamicField(self):
         class Doc(me.Document):
             dynamic = me.DynamicField()
         fields_ = fields_for_model(Doc)
@@ -99,3 +99,73 @@ class TestFields(BaseTest):
         load = DocSchema().load(dump.data)
         assert not load.errors
         assert load.data.dynamic == data
+
+    def test_GenericReferenceField(self):
+        class Doc(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            generic = me.GenericReferenceField()
+        class SubDocA(me.Document):
+            field_a = me.StringField(primary_key=True, default='doc_a_pk')
+        class SubDocB(me.Document):
+            field_b = me.IntField(primary_key=True, default=42)
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['generic']) is fields.GenericReference
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        sub_doc_a = SubDocA().save()
+        sub_doc_b = SubDocB().save()
+        doc = Doc(generic=sub_doc_a)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'generic': 'doc_a_pk', 'id': 'main'}
+        doc.generic = sub_doc_b
+        doc.save()
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'generic': 42, 'id': 'main'}
+        # TODO: test load ?
+
+    def test_GenericEmbeddedDocumentField(self):
+        class Doc(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            embedded = me.GenericEmbeddedDocumentField()
+        class EmbeddedA(me.EmbeddedDocument):
+            field_a = me.StringField(default='field_a_value')
+        class EmbeddedB(me.EmbeddedDocument):
+            field_b = me.IntField(default=42)
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['embedded']) is fields.GenericEmbeddedDocument
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc = Doc(embedded=EmbeddedA())
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'embedded': {'field_a': 'field_a_value'}, 'id': 'main'}
+        doc.embedded = EmbeddedB()
+        doc.save()
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'embedded': {'field_b': 42}, 'id': 'main'}
+        # TODO: test load ?
+
+    def test_MapField(self):
+        class MappedDoc(me.EmbeddedDocument):
+            field = me.StringField()
+        class Doc(me.Document):
+            id = me.IntField(primary_key=True, default=1)
+            map = me.MapField(me.EmbeddedDocumentField(MappedDoc))
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['map']) is fields.Map
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc = Doc(map={'a': MappedDoc(field='A'), 'b': MappedDoc(field='B')}).save()
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'map': {'a': {'field': 'A'}, 'b': {'field': 'B'}}, 'id': 1}
+        # Try the load
+        load = DocSchema().load(dump.data)
+        assert not load.errors
+        assert load.data.map == doc.map

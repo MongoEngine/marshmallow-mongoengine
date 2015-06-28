@@ -78,6 +78,11 @@ class ReferenceBuilder(MetaFieldBuilder):
         )
 
 
+class GenericReferenceBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.GenericReference
+
+
 class DateTimeBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.DateTime
@@ -110,9 +115,28 @@ class EmbeddedDocumentBuilder(MetaFieldBuilder):
         )
 
 
+class GenericEmbeddedDocumentBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.GenericEmbeddedDocument
+
+
 class DynamicBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Raw
+
+
+class MapBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Map
+
+    def _get_marshmallow_field_cls(self):
+        # Recursive build of marshmallow schema
+        from marshmallow_mongoengine.convert import convert_field
+
+        return functools.partial(
+            self.MARSHMALLOW_FIELD_CLS,
+            convert_field(self.mongoengine_field.field)
+        )
 
 
 class SkipBuilder(MetaFieldBuilder):
@@ -131,15 +155,14 @@ FIELD_MAPPING = {
     me.fields.EmailField: StringBuilder,
     me.fields.EmbeddedDocumentField: EmbeddedDocumentBuilder,
     me.fields.FloatField: FloatBuilder,
-    # # me.fields.GenericEmbeddedDocumentField:
-    #    ma_fields.GenericEmbeddedDocument,
-    # # me.fields.GenericReferenceField: ma_fields.GenericReference,
+    me.fields.GenericEmbeddedDocumentField: GenericEmbeddedDocumentBuilder,
+    me.fields.GenericReferenceField: GenericReferenceBuilder,
     # FilesField and ImageField can't be simply displayed...
     me.fields.FileField: SkipBuilder,
     me.fields.ImageField: SkipBuilder,
     me.fields.IntField: IntegerBuilder,
     me.fields.ListField: ListBuilder,
-    # # me.fields.MapField: ma_fields.Map,
+    me.fields.MapField: MapBuilder,
     me.fields.ObjectIdField: StringBuilder,
     me.fields.ReferenceField: ReferenceBuilder,
     me.fields.SequenceField: IntegerBuilder,  # TODO: handle value_decorator

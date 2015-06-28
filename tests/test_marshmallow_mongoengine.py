@@ -216,13 +216,13 @@ class TestModelSchema(BaseTest):
         for field in ('id', 'full_name', 'age'):
             result.data.get(field, '<not_set>') == getattr(student, field)
         # related field dumps to pk
-        assert result.data['current_school'] == str(student.current_school.pk)
+        assert result.data['current_school'] == student.current_school.pk
 
     def test_model_schema_bad_loading(self, models, schemas, school):
         schema = schemas.StudentSchema()
         default_payload = {'full_name': 'John Doe', 'age': 25, 'dob': None,
                            'date_created': datetime.utcnow().isoformat(),
-                           'current_school': str(school.pk)}
+                           'current_school': school.pk}
         # Make sure default_payload is valid
         result = schema.load(default_payload)
         assert not result.errors
