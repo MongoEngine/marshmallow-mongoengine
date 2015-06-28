@@ -14,7 +14,7 @@ from marshmallow_mongoengine.convert import (
 )
 from marshmallow_mongoengine.exceptions import ModelConversionError
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __license__ = 'MIT'
 
 __all__ = [
