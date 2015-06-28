@@ -6,7 +6,7 @@ from datetime import datetime
 
 import mongoengine as me
 
-from marshmallow import validate
+from marshmallow import validate, Schema
 
 import pytest
 from marshmallow_mongoengine import (fields, fields_for_model, ModelSchema,
@@ -169,3 +169,30 @@ class TestFields(BaseTest):
         load = DocSchema().load(dump.data)
         assert not load.errors
         assert load.data.map == doc.map
+
+    def test_ReferenceField(self):
+        class ReferenceDoc(me.Document):
+            field = me.IntField(primary_key=True, default=42)
+        class Doc(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            ref = me.ReferenceField(ReferenceDoc)
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['ref']) is fields.Reference
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        ref_doc = ReferenceDoc().save()
+        doc = Doc(ref=ref_doc)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'ref': 42, 'id': 'main'}
+        # Try the same with reference document type passed as string
+        class DocSchemaRefAsString(Schema):
+            id = fields.String()
+            ref = fields.Reference('ReferenceDoc')
+        dump = DocSchemaRefAsString().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'ref': 42, 'id': 'main'}
+        load = DocSchemaRefAsString().load(dump.data)
+        assert not load.errors
+        assert type(load.data['ref']) == ReferenceDoc

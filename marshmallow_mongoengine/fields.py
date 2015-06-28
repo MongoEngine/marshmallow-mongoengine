@@ -1,6 +1,7 @@
 from marshmallow import ValidationError, missing
 from marshmallow.fields import Field
 from mongoengine import ValidationError as MongoValidationError
+from mongoengine.base import get_document
 # Republishing the default fields...
 from marshmallow.fields import *  # flake8: noqa
 
@@ -11,16 +12,23 @@ class Reference(Field):
     Marshmallow custom field to map with :class Mongoengine.ReferenceField:
     """
 
-    def __init__(self, document_cls, *args, **kwargs):
-        self.document_cls = document_cls
+    def __init__(self, document_type_obj, *args, **kwargs):
+        self.document_type_obj = document_type_obj
         super(Reference, self).__init__(*args, **kwargs)
 
+    @property
+    def document_type(self):
+        if isinstance(self.document_type_obj, str):
+            self.document_type_obj = get_document(self.document_type_obj)
+        return self.document_type_obj
+
     def _deserialize(self, value):
+        document_type = self.document_type
         try:
-            return self.document_cls.objects.get(pk=value)
-        except self.document_cls.DoesNotExist:
+            return document_type.objects.get(pk=value)
+        except document_type.DoesNotExist:
             raise ValidationError('unknown `%s` document with id `%s`' %
-                                  (self.document_cls.__name__, value))
+                                  (document_type.__name__, value))
         except MongoValidationError:
             raise ValidationError('invalid ObjectId `%s`' % value)
         return value
