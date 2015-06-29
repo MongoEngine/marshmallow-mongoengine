@@ -187,7 +187,11 @@ class TestModelSchema(BaseTest):
 
     @pytest.fixture
     def student(self, models, school):
-        student_ = models.Student(full_name='Monty Python', current_school=school).save()
+        student_ = models.Student(
+            full_name='Monty Python',
+            age=10,
+            dob=datetime.utcnow(),
+            current_school=school).save()
         return student_
 
     @pytest.fixture
@@ -208,6 +212,14 @@ class TestModelSchema(BaseTest):
                                grade=3,
                                students=[student]).save()
         return course
+
+    def test_update(self, schemas, student):
+        payload = {'full_name': 'Guido Van Rossum', 'age': 59}
+        result = schemas.StudentSchema().update(student, payload)
+        assert not result.errors
+        assert result.data is student
+        for k, v in payload.items():
+            assert getattr(student, k) == v, (k, v)
 
     def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()

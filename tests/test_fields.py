@@ -50,7 +50,24 @@ class TestFields(BaseTest):
         load = FileSchema().load({'name': 'bad_load', 'file': b'12345'})
         assert not load.data.file
 
-    def test_field_dict(self):
+    def test_ListField(self):
+        class Doc(me.Document):
+            list = me.ListField(me.StringField())
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['list']) is fields.List
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        list_ = ['A', 'B', 'C']
+        doc = Doc(list=list_)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'list': list_}
+        load = DocSchema().load(dump.data)
+        assert not load.errors
+        assert load.data.list == list_
+
+    def test_DictField(self):
         class Doc(me.Document):
             data = me.DictField()
         fields_ = fields_for_model(Doc)
@@ -69,8 +86,7 @@ class TestFields(BaseTest):
         doc = Doc(data=data)
         dump = DocSchema().dump(doc)
         assert not dump.errors
-        assert dump.data == {'data': data, 'id': None}
-        del dump.data['id']
+        assert dump.data == {'data': data}
         load = DocSchema().load(dump.data)
         assert not load.errors
         assert load.data.data == data
@@ -94,8 +110,7 @@ class TestFields(BaseTest):
         doc = Doc(dynamic=data)
         dump = DocSchema().dump(doc)
         assert not dump.errors
-        assert dump.data == {'dynamic': data, 'id': None}
-        del dump.data['id']
+        assert dump.data == {'dynamic': data}
         load = DocSchema().load(dump.data)
         assert not load.errors
         assert load.data.dynamic == data

@@ -70,3 +70,31 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
 
     def make_object(self, data):
         return self.opts.model(**data)
+
+    def update(self, obj, data):
+        """Helper function to update an already existing document
+    instead of creating a new one.
+    :param obj: Monogengine Document to update
+    :param data: incomming payload to deserialize
+    :return: an :class UnmarshallResult:
+
+    Example: ::
+
+        from marshmallow_mongoengine import ModelSchema
+        from mymodels import User
+
+        class UserSchema(ModelSchema):
+            class Meta:
+                model = User
+
+        def update_obj(id, payload):
+            user = User.objects(id=id).first()
+            result = UserSchema().update(user, payload)
+            result.data is user # True
+        """
+        data, errors = self._do_load(data, postprocess=False)
+        if not errors:
+            # Update the given obj fields
+            for k, v in data.items():
+                setattr(obj, k, v)
+        return ma.UnmarshalResult(data=obj, errors=errors)

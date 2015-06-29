@@ -1,13 +1,62 @@
 from marshmallow import ValidationError, missing
-from marshmallow.fields import Field
+from marshmallow import fields, missing
 from mongoengine import ValidationError as MongoValidationError
 from mongoengine.base import get_document
-# Republishing the default fields...
-from marshmallow.fields import *  # flake8: noqa
 
+
+# Default marshmallow fields consider None and empty list/tuple as a valid
+class SkipEmptyClass:
+    def __init__(self, *args, skip_empty=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.skip_empty = skip_empty
+
+    def _serialize(self, value, attr, obj):
+        value = super()._serialize(value, attr, obj)
+        if (self.skip_empty and
+            (value is None or isinstance(value, (list, tuple)) and not value)):
+            return missing
+        return value
+
+
+class Field(SkipEmptyClass, fields.Field): pass
+class Raw(SkipEmptyClass, fields.Raw): pass
+class Nested(SkipEmptyClass, fields.Nested): pass
+class List(SkipEmptyClass, fields.List): pass
+class String(SkipEmptyClass, fields.String): pass
+class UUID(SkipEmptyClass, fields.UUID): pass
+class Number(SkipEmptyClass, fields.Number): pass
+class Integer(SkipEmptyClass, fields.Integer): pass
+class Decimal(SkipEmptyClass, fields.Decimal): pass
+class Boolean(SkipEmptyClass, fields.Boolean): pass
+class FormattedString(SkipEmptyClass, fields.FormattedString): pass
+class Float(SkipEmptyClass, fields.Float): pass
+class Arbitrary(SkipEmptyClass, fields.Arbitrary): pass
+class DateTime(SkipEmptyClass, fields.DateTime): pass
+class LocalDateTime(SkipEmptyClass, fields.LocalDateTime): pass
+class Time(SkipEmptyClass, fields.Time): pass
+class Date(SkipEmptyClass, fields.Date): pass
+class TimeDelta(SkipEmptyClass, fields.TimeDelta): pass
+class Fixed(SkipEmptyClass, fields.Fixed): pass
+class Price(SkipEmptyClass, fields.Price): pass
+class Url(SkipEmptyClass, fields.Url): pass
+class URL(SkipEmptyClass, fields.URL): pass
+class Email(SkipEmptyClass, fields.Email): pass
+Method = fields.Method
+Function = fields.Function
+class Select(SkipEmptyClass, fields.Select): pass
+class QuerySelect(SkipEmptyClass, fields.QuerySelect): pass
+class QuerySelectList(SkipEmptyClass, fields.QuerySelectList): pass
+class Constant(SkipEmptyClass, fields.Constant): pass
+
+# Aliases
+URL = Url
+Enum = Select
+Str = String
+Bool = Boolean
+Int = Integer
 
 # ...and add custom ones for mongoengine
-class Reference(Field):
+class Reference(fields.Field):
     """
     Marshmallow custom field to map with :class Mongoengine.ReferenceField:
     """
@@ -36,11 +85,11 @@ class Reference(Field):
     def _serialize(self, value, attr, obj):
         # Only return the pk of the document for serialization
         if value is None:
-            return None
+            return missing
         return value.pk
 
 
-class GenericReference(Field):
+class GenericReference(fields.Field):
     """
     Marshmallow custom field to map with :class Mongoengine.GenericReferenceField:
     """
@@ -53,11 +102,11 @@ class GenericReference(Field):
     def _serialize(self, value, attr, obj):
         # Only return the pk of the document for serialization
         if value is None:
-            return None
+            return missing
         return value.pk
 
 
-class GenericEmbeddedDocument(Field):
+class GenericEmbeddedDocument(fields.Field):
     """
     Dynamic embedded document
     """
@@ -80,7 +129,7 @@ class GenericEmbeddedDocument(Field):
         return data
 
 
-class Map(Field):
+class Map(fields.Field):
     """
     Marshmallow custom field to map with :class Mongoengine.Map:
     """
@@ -108,7 +157,7 @@ class Map(Field):
         return total_load
 
 
-class Skip(Field):
+class Skip(fields.Field):
     """
     Marshmallow custom field that just ignore the current field
     """
