@@ -1,52 +1,131 @@
-from marshmallow import ValidationError, missing
-from marshmallow import fields, missing
+from marshmallow import ValidationError, fields, missing
 from mongoengine import ValidationError as MongoValidationError
 from mongoengine.base import get_document
 
 
 # Default marshmallow fields consider None and empty list/tuple as a valid
-class SkipEmptyClass:
-    def __init__(self, *args, skip_empty=True, **kwargs):
-        super().__init__(*args, **kwargs)
+class SkipEmptyClass(object):
+    def __init__(self, *args, **kwargs):
+        skip_empty = kwargs.pop('skip_empty', True)
+        super(SkipEmptyClass, self).__init__(*args, **kwargs)
         self.skip_empty = skip_empty
 
     def _serialize(self, value, attr, obj):
-        value = super()._serialize(value, attr, obj)
+        value = super(SkipEmptyClass, self)._serialize(value, attr, obj)
         if (self.skip_empty and
-            (value is None or isinstance(value, (list, tuple)) and not value)):
+                (value is None or isinstance(value, (list, tuple)) and not value)):
             return missing
         return value
 
 
-class Field(SkipEmptyClass, fields.Field): pass
-class Raw(SkipEmptyClass, fields.Raw): pass
-class Nested(SkipEmptyClass, fields.Nested): pass
-class List(SkipEmptyClass, fields.List): pass
-class String(SkipEmptyClass, fields.String): pass
-class UUID(SkipEmptyClass, fields.UUID): pass
-class Number(SkipEmptyClass, fields.Number): pass
-class Integer(SkipEmptyClass, fields.Integer): pass
-class Decimal(SkipEmptyClass, fields.Decimal): pass
-class Boolean(SkipEmptyClass, fields.Boolean): pass
-class FormattedString(SkipEmptyClass, fields.FormattedString): pass
-class Float(SkipEmptyClass, fields.Float): pass
-class Arbitrary(SkipEmptyClass, fields.Arbitrary): pass
-class DateTime(SkipEmptyClass, fields.DateTime): pass
-class LocalDateTime(SkipEmptyClass, fields.LocalDateTime): pass
-class Time(SkipEmptyClass, fields.Time): pass
-class Date(SkipEmptyClass, fields.Date): pass
-class TimeDelta(SkipEmptyClass, fields.TimeDelta): pass
-class Fixed(SkipEmptyClass, fields.Fixed): pass
-class Price(SkipEmptyClass, fields.Price): pass
-class Url(SkipEmptyClass, fields.Url): pass
-class URL(SkipEmptyClass, fields.URL): pass
-class Email(SkipEmptyClass, fields.Email): pass
+class Field(SkipEmptyClass, fields.Field):
+    pass
+
+
+class Raw(SkipEmptyClass, fields.Raw):
+    pass
+
+
+class Nested(SkipEmptyClass, fields.Nested):
+    pass
+
+
+class List(SkipEmptyClass, fields.List):
+    pass
+
+
+class String(SkipEmptyClass, fields.String):
+    pass
+
+
+class UUID(SkipEmptyClass, fields.UUID):
+    pass
+
+
+class Number(SkipEmptyClass, fields.Number):
+    pass
+
+
+class Integer(SkipEmptyClass, fields.Integer):
+    pass
+
+
+class Decimal(SkipEmptyClass, fields.Decimal):
+    pass
+
+
+class Boolean(SkipEmptyClass, fields.Boolean):
+    pass
+
+
+class FormattedString(SkipEmptyClass, fields.FormattedString):
+    pass
+
+
+class Float(SkipEmptyClass, fields.Float):
+    pass
+
+
+class Arbitrary(SkipEmptyClass, fields.Arbitrary):
+    pass
+
+
+class DateTime(SkipEmptyClass, fields.DateTime):
+    pass
+
+
+class LocalDateTime(SkipEmptyClass, fields.LocalDateTime):
+    pass
+
+
+class Time(SkipEmptyClass, fields.Time):
+    pass
+
+
+class Date(SkipEmptyClass, fields.Date):
+    pass
+
+
+class TimeDelta(SkipEmptyClass, fields.TimeDelta):
+    pass
+
+
+class Fixed(SkipEmptyClass, fields.Fixed):
+    pass
+
+
+class Price(SkipEmptyClass, fields.Price):
+    pass
+
+
+class Url(SkipEmptyClass, fields.Url):
+    pass
+
+
+class Email(SkipEmptyClass, fields.Email):
+    pass
+
+
+class Select(SkipEmptyClass, fields.Select):
+    pass
+
+
+class QuerySelect(SkipEmptyClass, fields.QuerySelect):
+    pass
+
+
+class QuerySelectList(SkipEmptyClass, fields.QuerySelectList):
+    pass
+
+
+class Constant(SkipEmptyClass, fields.Constant):
+    pass
+
+
+# Verbatim republish for those ones
 Method = fields.Method
 Function = fields.Function
-class Select(SkipEmptyClass, fields.Select): pass
-class QuerySelect(SkipEmptyClass, fields.QuerySelect): pass
-class QuerySelectList(SkipEmptyClass, fields.QuerySelectList): pass
-class Constant(SkipEmptyClass, fields.Constant): pass
+
 
 # Aliases
 URL = Url
@@ -54,6 +133,7 @@ Enum = Select
 Str = String
 Bool = Boolean
 Int = Integer
+
 
 # ...and add custom ones for mongoengine
 class Reference(fields.Field):
