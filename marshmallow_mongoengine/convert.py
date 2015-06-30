@@ -53,7 +53,7 @@ given model.
 
 
 convert_field = default_converter.convert_field
-"""Convert a Mongoengine `Filed` to a field instance or class.
+"""Convert a Mongoengine `Field` to a field instance or class.
 
 :param Property field_me: Mongoengine Field Property.
 :param fields_kwargs: Dict of per-field kwargs to pass at field creation.
