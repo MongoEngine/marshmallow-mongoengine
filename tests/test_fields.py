@@ -67,6 +67,27 @@ class TestFields(BaseTest):
         assert not load.errors
         assert load.data.list == list_
 
+    def test_ListSpecialField(self):
+        class NestedDoc(me.EmbeddedDocument):
+            field = me.StringField()
+        class Doc(me.Document):
+            list = me.ListField(me.EmbeddedDocumentField(NestedDoc))
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['list']) is fields.List
+        assert type(fields_['list'].container) is fields.Nested
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        list_ = [{'field': 'A'}, {'field': 'B'}, {'field': 'C'}]
+        doc = Doc(list=list_)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'list': list_}
+        load = DocSchema().load(dump.data)
+        assert not load.errors
+        for i, elem in enumerate(list_):
+            assert load.data.list[i].field == elem['field']
+
     def test_DictField(self):
         class Doc(me.Document):
             data = me.DictField()

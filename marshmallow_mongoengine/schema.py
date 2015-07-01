@@ -44,7 +44,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
                 declared_fields = converter.fields_for_model(
                     opts.model,
                     fields=opts.fields,
-                    fields_kwargs=opts.model_fields_kwargs
+                    fields_kwargs=opts.model_fields_kwargs,
                 )
                 break
         base_fields = super(SchemaMeta, mcs).get_declared_fields(
@@ -74,7 +74,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     def update(self, obj, data):
         """Helper function to update an already existing document
     instead of creating a new one.
-    :param obj: Monogengine Document to update
+    :param obj: Mongoengine Document to update
     :param data: incomming payload to deserialize
     :return: an :class UnmarshallResult:
 

@@ -252,8 +252,7 @@ class TestModelSchema(BaseTest):
         schema = schemas.StudentSchema()
         dump = schema.dump(student)
         assert not dump.errors
-        load = schema.load({k: v for k, v in dump.data.items()
-                              if v is not None})
+        load = schema.load(dump.data)
         assert not load.errors
         assert type(load.data) == models.Student
         assert load.data.current_school == student.current_school
@@ -266,8 +265,7 @@ class TestModelSchema(BaseTest):
         schema = schemas.SchoolSchema()
         dump = schema.dump(school)
         assert not dump.errors
-        load = schema.load({k: v for k, v in dump.data.items()
-                            if v is not None})
+        load = schema.load(dump.data)
         assert not load.errors
         assert type(load.data) == models.School
         # Check embedded document
@@ -278,8 +276,7 @@ class TestModelSchema(BaseTest):
         schema = schemas.CourseSchema()
         dump = schema.dump(course)
         assert not dump.errors
-        load = schema.load({k: v for k, v in dump.data.items()
-                            if v is not None})
+        load = schema.load(dump.data)
         assert not load.errors
         assert type(load.data) == models.Course
         # Check dict field

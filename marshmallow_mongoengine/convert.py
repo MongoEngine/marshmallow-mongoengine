@@ -16,10 +16,11 @@ class ModelConverter(object):
 
     def fields_for_model(self, model, fields_kwargs=None, fields=None):
         result = {}
+        fields_kwargs = fields_kwargs or {}
         for field_name, field_me in model._fields.items():
             if fields and field_name not in fields:
                 continue
-            if fields_kwargs and field_name in fields_kwargs:
+            if field_name in fields_kwargs:
                 field_ma_cls = self.convert_field(field_me,
                                                   **fields_kwargs[field_name])
             else:
