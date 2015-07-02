@@ -24,6 +24,16 @@ class MetaParam(object):
         return field_kwargs
 
 
+class RequiredParam(MetaParam):
+    def __init__(self, field_me):
+        super(RequiredParam, self).__init__()
+        required = getattr(field_me, 'required')
+        # If the field has a default value, we don't have to enforce the
+        # require check
+        if required and not getattr(field_me, 'default', False):
+            self.field_kwargs['required'] = required
+
+
 class LenghtParam(MetaParam):
     def __init__(self, field_me):
         super(LenghtParam, self).__init__()
@@ -70,3 +80,11 @@ class ChoiceParam(MetaParam):
         choices = getattr(field_me, 'choices', None)
         if choices:
             self.field_kwargs['validate'].append(validate.OneOf(choices))
+
+
+class PrecisionParam(MetaParam):
+    def __init__(self, field_me):
+        super(PrecisionParam, self).__init__()
+        precision = getattr(field_me, 'precision', None)
+        if precision:
+            self.field_kwargs['places'] = precision

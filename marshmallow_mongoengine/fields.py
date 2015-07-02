@@ -163,10 +163,10 @@ class Reference(fields.Field):
         return value
 
     def _serialize(self, value, attr, obj):
-        # Only return the pk of the document for serialization
+        # Only return the id of the document for serialization
         if value is None:
             return missing
-        return value.pk
+        return value.id
 
 
 class GenericReference(fields.Field):
@@ -180,10 +180,10 @@ class GenericReference(fields.Field):
         return missing
 
     def _serialize(self, value, attr, obj):
-        # Only return the pk of the document for serialization
+        # Only return the id of the document for serialization
         if value is None:
             return missing
-        return value.pk
+        return value.id
 
 
 class GenericEmbeddedDocument(fields.Field):

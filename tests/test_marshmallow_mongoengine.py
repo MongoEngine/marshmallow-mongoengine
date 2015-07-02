@@ -214,12 +214,16 @@ class TestModelSchema(BaseTest):
         return course
 
     def test_update(self, schemas, student):
-        payload = {'full_name': 'Guido Van Rossum', 'age': 59}
+        dob = datetime(1956, 1, 30)
+        payload = {'dob': dob.isoformat(), 'age': 59}
+        full_name = student.full_name
         result = schemas.StudentSchema().update(student, payload)
         assert not result.errors
         assert result.data is student
-        for k, v in payload.items():
-            assert getattr(student, k) == v, (k, v)
+        assert student.dob == dob
+        assert student.age == 59
+        # Make sure default values doesn't mess
+        assert student.full_name == full_name
 
     def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()
@@ -260,6 +264,22 @@ class TestModelSchema(BaseTest):
         load.data.save()
         student.reload()
         assert student.age == 25
+
+    def test_model_schema_loading_no_load_id(self, models, schemas, student):
+        # If specified, we don't load the id from the data
+        class NoLoadIdStudentSchema(schemas.StudentSchema):
+            class Meta:
+                model = models.Student
+                autogenerate_pk_dump_only = True
+        schema = NoLoadIdStudentSchema()
+        dump = schema.dump(student)
+        assert not dump.errors
+        # Don't skip id in serialization
+        assert dump.data.get('id', '<not_set>') == str(student.id)
+        # Id is autogenerate, thus it cannot be loaded by the unmarshaller
+        load = schema.load(dump.data)
+        assert not load.errors
+        assert not load.data.id
 
     def test_model_schema_loading_school(self, models, schemas, school):
         schema = schemas.SchoolSchema()
@@ -337,3 +357,11 @@ class TestModelSchema(BaseTest):
         data, errors = schema.dump(student)
         assert 'full_name' in data
         assert data['full_name'] == student.full_name.upper()
+
+    def test_check_bad_model(self):
+        class DummyClass:
+            pass
+        with pytest.raises(ValueError):
+            class BadModelSchema(ModelSchema):
+                class Meta:
+                    model = DummyClass

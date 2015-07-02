@@ -10,7 +10,7 @@ from marshmallow_mongoengine.exceptions import ModelConversionError
 
 class MetaFieldBuilder(object):
     BASE_AVAILABLE_PARAMS = (params.DescriptionParam, params.AllowNoneParam,
-                             params.ChoiceParam)
+                             params.ChoiceParam, params.RequiredParam)
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = None
 
@@ -45,7 +45,7 @@ class FloatBuilder(MetaFieldBuilder):
 
 
 class DecimalBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.SizeParam,)
+    AVAILABLE_PARAMS = (params.SizeParam, params.PrecisionParam)
     MARSHMALLOW_FIELD_CLS = ma_fields.Decimal
 
 
@@ -101,14 +101,17 @@ class DictBuilder(MetaFieldBuilder):
 class EmbeddedDocumentBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Nested
+    BASE_NESTED_SCHEMA_CLS = None
 
     def _get_marshmallow_field_cls(self):
         # Recursive build of marshmallow schema
         from marshmallow_mongoengine.schema import ModelSchema
+        base_nested_schema_cls = self.BASE_NESTED_SCHEMA_CLS or ModelSchema
 
-        class NestedSchema(ModelSchema):
+        class NestedSchema(base_nested_schema_cls):
             class Meta:
                 model = self.mongoengine_field.document_type
+
         return functools.partial(
             self.MARSHMALLOW_FIELD_CLS,
             NestedSchema
