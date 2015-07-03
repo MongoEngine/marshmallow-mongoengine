@@ -9,17 +9,23 @@ from marshmallow_mongoengine.exceptions import ModelConversionError
 
 
 class MetaFieldBuilder(object):
+    """
+    Convert a given Mongoengine Field to an equivalent Marshmallow Field
+    """
     BASE_AVAILABLE_PARAMS = (params.DescriptionParam, params.AllowNoneParam,
                              params.ChoiceParam, params.RequiredParam)
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = None
 
     def __init__(self, field):
-        self.AVAILABLE_PARAMS += self.BASE_AVAILABLE_PARAMS
         self.mongoengine_field = field
-        self.params = [paramCls(field) for paramCls in self.AVAILABLE_PARAMS]
+        self.params = [paramCls(field)
+            for paramCls in self.BASE_AVAILABLE_PARAMS + self.AVAILABLE_PARAMS]
 
     def build_marshmallow_field(self, **kwargs):
+        """
+        :return: The Marshmallow Field instanciated and configured
+        """
         field_kwargs = None
         for param in self.params:
             field_kwargs = param.apply(field_kwargs)
@@ -27,31 +33,15 @@ class MetaFieldBuilder(object):
         return self.marshmallow_field_cls(**field_kwargs)
 
     def _get_marshmallow_field_cls(self):
+        """
+        Return the marshmallow Field class, overload this method to
+        generate more dynamic field class
+        """
         return self.MARSHMALLOW_FIELD_CLS
 
     @property
     def marshmallow_field_cls(self):
         return self._get_marshmallow_field_cls()
-
-
-class IntegerBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.SizeParam,)
-    MARSHMALLOW_FIELD_CLS = ma_fields.Integer
-
-
-class FloatBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.SizeParam,)
-    MARSHMALLOW_FIELD_CLS = ma_fields.Float
-
-
-class DecimalBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.SizeParam, params.PrecisionParam)
-    MARSHMALLOW_FIELD_CLS = ma_fields.Decimal
-
-
-class StringBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.LenghtParam,)
-    MARSHMALLOW_FIELD_CLS = ma_fields.String
 
 
 class ListBuilder(MetaFieldBuilder):
@@ -78,26 +68,6 @@ class ReferenceBuilder(MetaFieldBuilder):
         )
 
 
-class GenericReferenceBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.GenericReference
-
-
-class DateTimeBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.DateTime
-
-
-class BooleanBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.Boolean
-
-
-class DictBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.Raw
-
-
 class EmbeddedDocumentBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Nested
@@ -118,16 +88,6 @@ class EmbeddedDocumentBuilder(MetaFieldBuilder):
         )
 
 
-class GenericEmbeddedDocumentBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.GenericEmbeddedDocument
-
-
-class DynamicBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.Raw
-
-
 class MapBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Map
@@ -142,47 +102,6 @@ class MapBuilder(MetaFieldBuilder):
         )
 
 
-class SkipBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = ()
-    MARSHMALLOW_FIELD_CLS = ma_fields.Skip
-
-
-FIELD_MAPPING = {
-    me.fields.BinaryField: IntegerBuilder,
-    me.fields.BooleanField: BooleanBuilder,
-    me.fields.ComplexDateTimeField: DateTimeBuilder,
-    me.fields.DateTimeField: DateTimeBuilder,
-    me.fields.DecimalField: DecimalBuilder,
-    me.fields.DictField: DictBuilder,
-    me.fields.DynamicField: DynamicBuilder,
-    me.fields.EmailField: StringBuilder,
-    me.fields.EmbeddedDocumentField: EmbeddedDocumentBuilder,
-    me.fields.FloatField: FloatBuilder,
-    me.fields.GenericEmbeddedDocumentField: GenericEmbeddedDocumentBuilder,
-    me.fields.GenericReferenceField: GenericReferenceBuilder,
-    # FilesField and ImageField can't be simply displayed...
-    me.fields.FileField: SkipBuilder,
-    me.fields.ImageField: SkipBuilder,
-    me.fields.IntField: IntegerBuilder,
-    me.fields.ListField: ListBuilder,
-    me.fields.MapField: MapBuilder,
-    me.fields.ObjectIdField: StringBuilder,
-    me.fields.ReferenceField: ReferenceBuilder,
-    me.fields.SequenceField: IntegerBuilder,  # TODO: handle value_decorator
-    me.fields.SortedListField: ListBuilder,
-    me.fields.StringField: StringBuilder,
-    me.fields.URLField: StringBuilder,
-    # TODO: finish fields...
-    # me.fields.UUIDField: ma_fields.UUID,
-    # me.fields.PointField: ma_fields.Point,
-    # me.fields.GeoPointField: ma_fields.GeoPoint,
-    # me.fields.LineStringField: ma_fields.LineString,
-    # me.fields.PolygonField: ma_fields.Polygon,
-    # me.fields.MultiPointField: ma_fields.MultiPoint,
-    # me.fields.MultiLineStringField: ma_fields.MultiLineString,
-    # me.fields.MultiPolygonField: ma_fields.MultiPolygon,
-}
-
 
 def get_field_builder_for_data_type(field_me):
     field_me_types = inspect.getmro(type(field_me))
@@ -194,3 +113,76 @@ def get_field_builder_for_data_type(field_me):
         raise ModelConversionError(
             'Could not find field of type {0}.'.format(field_me))
     return field_ma_cls(field_me)
+
+
+FIELD_MAPPING = {
+}
+
+
+def register_field_builder(mongo_field_cls, builder):
+    """
+    Register a :class MetaFieldBuilder: to a given Mongoengine Field
+    :param mongo_field_cls: Mongoengine Field
+    :param build: field_builder to register
+    """
+    FIELD_MAPPING[mongo_field_cls] = builder
+
+
+def register_field(mongo_field_cls, marshmallow_field_cls,
+                   available_params=()):
+    """
+    Bind a marshmallow field to it corresponding mongoengine field
+    :param mongo_field_cls: Mongoengine Field
+    :param marshmallow_field_cls: Marshmallow Field
+    :param available_params: List of :class marshmallow_mongoengine.cnoversion.params.MetaParam:
+        instances to import the mongoengine field config to marshmallow
+    """
+    class Builder(MetaFieldBuilder):
+        AVAILABLE_PARAMS = available_params
+        MARSHMALLOW_FIELD_CLS = marshmallow_field_cls
+    register_field_builder(mongo_field_cls, Builder)
+
+
+register_field(me.fields.BinaryField, ma_fields.Integer,
+               available_params=(params.SizeParam,))
+register_field(me.fields.BooleanField, ma_fields.Boolean)
+register_field(me.fields.ComplexDateTimeField, ma_fields.DateTime)
+register_field(me.fields.DateTimeField, ma_fields.DateTime)
+register_field(me.fields.DecimalField, ma_fields.Decimal,
+               available_params=(params.SizeParam, params.PrecisionParam))
+register_field(me.fields.DictField, ma_fields.Raw)
+register_field(me.fields.DynamicField, ma_fields.Raw)
+register_field(me.fields.EmailField, ma_fields.String,
+               available_params=(params.LenghtParam,))
+register_field(me.fields.FloatField, ma_fields.Float,
+               available_params=(params.SizeParam,))
+register_field(me.fields.GenericEmbeddedDocumentField,
+               ma_fields.GenericEmbeddedDocument)
+register_field(me.fields.GenericReferenceField, ma_fields.GenericReference)
+# FilesField and ImageField can't be simply displayed...
+register_field(me.fields.FileField, ma_fields.Skip)
+register_field(me.fields.ImageField, ma_fields.Skip)
+register_field(me.fields.IntField, ma_fields.Integer,
+               available_params=(params.SizeParam,))
+register_field(me.fields.ObjectIdField, ma_fields.String,
+               available_params=(params.LenghtParam,))
+register_field(me.fields.SequenceField, ma_fields.Integer,
+               available_params=(params.SizeParam,))  # TODO: handle value_decorator
+register_field(me.fields.StringField, ma_fields.String,
+               available_params=(params.LenghtParam,))
+register_field(me.fields.URLField, ma_fields.String,
+               available_params=(params.LenghtParam,))
+register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
+register_field_builder(me.fields.ListField, ListBuilder)
+register_field_builder(me.fields.MapField, MapBuilder)
+register_field_builder(me.fields.ReferenceField, ReferenceBuilder)
+register_field_builder(me.fields.SortedListField, ListBuilder)
+# TODO: finish fields...
+# me.fields.UUIDField: ma_fields.UUID,
+# me.fields.PointField: ma_fields.Point,
+# me.fields.GeoPointField: ma_fields.GeoPoint,
+# me.fields.LineStringField: ma_fields.LineString,
+# me.fields.PolygonField: ma_fields.Polygon,
+# me.fields.MultiPointField: ma_fields.MultiPoint,
+# me.fields.MultiLineStringField: ma_fields.MultiLineString,
+# me.fields.MultiPolygonField: ma_fields.MultiPolygon,

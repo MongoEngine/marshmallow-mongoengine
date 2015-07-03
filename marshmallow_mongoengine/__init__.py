@@ -6,6 +6,11 @@ from marshmallow_mongoengine.schema import (
     ModelSchema,
 )
 
+from marshmallow_mongoengine.conversion.fields import (
+    register_field,
+    register_field_builder
+)
+
 from marshmallow_mongoengine.convert import (
     ModelConverter,
     fields_for_model,
@@ -14,7 +19,7 @@ from marshmallow_mongoengine.convert import (
 )
 from marshmallow_mongoengine.exceptions import ModelConversionError
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 __license__ = 'MIT'
 
 __all__ = [
@@ -28,4 +33,6 @@ __all__ = [
     'convert_field',
     'field_for',
     'fields',
+    'register_field_builder',
+    'register_field',
 ]
