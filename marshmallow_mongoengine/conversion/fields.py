@@ -102,7 +102,6 @@ class MapBuilder(MetaFieldBuilder):
         )
 
 
-
 def get_field_builder_for_data_type(field_me):
     field_me_types = inspect.getmro(type(field_me))
     for field_me_type in field_me_types:
