@@ -182,7 +182,7 @@ class GenericReference(fields.Field):
         self.document_class_choices = []
         choices = kwargs.pop('choices', None)
         if choices:
-            # Temporary fix for  https://github.com/MongoEngine/mongoengine/pull/1060
+            # Temporary fix for https://github.com/MongoEngine/mongoengine/pull/1060
             for choice in choices:
                 if hasattr(choice, '_class_name'):
                     self.document_class_choices.append(choice._class_name)
