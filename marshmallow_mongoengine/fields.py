@@ -1,5 +1,5 @@
 from marshmallow import ValidationError, fields, missing
-from mongoengine import ValidationError as MongoValidationError
+from mongoengine import ValidationError as MongoValidationError, NotRegistered, Document
 from mongoengine.base import get_document
 
 
@@ -172,12 +172,46 @@ class Reference(fields.Field):
 class GenericReference(fields.Field):
     """
     Marshmallow custom field to map with :class Mongoengine.GenericReferenceField:
+
+    :param choices: List of Mongoengine document class (or class name) allowed
+
+    .. note:: Without `choices` param, this field allow to reference to
+        any document in the application which can be a security issue.
     """
+    def __init__(self, *args, **kwargs):
+        self.document_class_choices = []
+        choices = kwargs.pop('choices', None)
+        if choices:
+            # Temporary fix for  https://github.com/MongoEngine/mongoengine/pull/1060
+            for choice in choices:
+                if hasattr(choice, '_class_name'):
+                    self.document_class_choices.append(choice._class_name)
+                else:
+                    self.document_class_choices.append(choice)
+        super(GenericReference, self).__init__(*args, **kwargs)
 
     def _deserialize(self, value):
-        # Cannot deserialize given we have no way knowing wich kind of
-        # document is given...
-        return missing
+        # To deserialize a generic reference, we need a _cls field in addition
+        # with the id field
+        if not isinstance(value, dict) or 'id' not in value or '_cls' not in value:
+            raise ValidationError("Need a dict with 'id' and '_cls' fields")
+        doc_id = value['id']
+        doc_cls_name = value['_cls']
+        if self.document_class_choices and doc_cls_name not in self.document_class_choices:
+            raise ValidationError("Invalid _cls field `%s`, must be one of %s" %
+                                  (doc_cls_name, self.document_class_choices))
+        try:
+            doc_cls = get_document(doc_cls_name)
+        except NotRegistered:
+            raise ValidationError("Invalid _cls field `%s`" % doc_cls_name)
+        try:
+            doc = doc_cls.objects(pk=doc_id).first()
+        except ValueError:
+            # If id is imcompatible with document's id type
+            doc = None
+        if not doc:
+            raise ValidationError("Unknown document %s %s" % (doc_cls_name, doc_id))
+        return doc
 
     def _serialize(self, value, attr, obj):
         # Only return the id of the document for serialization

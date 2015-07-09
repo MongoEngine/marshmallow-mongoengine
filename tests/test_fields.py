@@ -149,6 +149,7 @@ class TestFields(BaseTest):
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
+        # Test dump
         sub_doc_a = SubDocA().save()
         sub_doc_b = SubDocB().save()
         doc = Doc(generic=sub_doc_a)
@@ -160,7 +161,39 @@ class TestFields(BaseTest):
         dump = DocSchema().dump(doc)
         assert not dump.errors
         assert dump.data == {'generic': 42, 'id': 'main'}
-        # TODO: test load ?
+        # Test load
+        for bad_generic in (
+                {'id': str(sub_doc_a.id)}, {'_cls': sub_doc_a._class_name},
+                {'id': str(sub_doc_a.id), '_cls': sub_doc_b._class_name},
+                {'id': 'not_an_id', '_cls': sub_doc_a._class_name},
+                {'id': str(sub_doc_a.id), '_cls': 'not_a_class'},
+            ):
+            load = DocSchema().load({"generic": bad_generic})
+            assert 'generic' in load.errors
+        load = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
+                                             "_cls": sub_doc_a._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_a
+        load = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
+                                             "_cls": sub_doc_b._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_b
+        # Teste choices param
+        class DocOnlyA(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            generic = me.GenericReferenceField(choices=[SubDocA])
+        class DocOnlyASchema(ModelSchema):
+            class Meta:
+                model = DocOnlyA
+        load = DocOnlyASchema().load({})
+        assert not load.errors
+        load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
+                                                  "_cls": sub_doc_a._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_a
+        load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
+                                                  "_cls": sub_doc_b._class_name}})
+        assert 'generic' in load.errors
 
     def test_GenericEmbeddedDocumentField(self):
         class Doc(me.Document):

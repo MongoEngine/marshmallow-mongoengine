@@ -68,6 +68,19 @@ class ReferenceBuilder(MetaFieldBuilder):
         )
 
 
+class GenericReferenceBuilder(MetaFieldBuilder):
+    BASE_AVAILABLE_PARAMS = tuple([p for p in MetaFieldBuilder.BASE_AVAILABLE_PARAMS
+                             if p is not params.ChoiceParam])
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.GenericReference
+
+    def build_marshmallow_field(self, **kwargs):
+        # Special handle for the choice field given it represent the
+        # reference's document class
+        kwargs['choices'] = getattr(self.mongoengine_field, 'choices', None)
+        return super(GenericReferenceBuilder, self).build_marshmallow_field(**kwargs)
+
+
 class EmbeddedDocumentBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Nested
@@ -157,7 +170,8 @@ register_field(me.fields.FloatField, ma_fields.Float,
                available_params=(params.SizeParam,))
 register_field(me.fields.GenericEmbeddedDocumentField,
                ma_fields.GenericEmbeddedDocument)
-register_field(me.fields.GenericReferenceField, ma_fields.GenericReference)
+register_field_builder(me.fields.GenericReferenceField, GenericReferenceBuilder)
+register_field_builder(me.fields.ReferenceField, ReferenceBuilder)
 # FilesField and ImageField can't be simply displayed...
 register_field(me.fields.FileField, ma_fields.Skip)
 register_field(me.fields.ImageField, ma_fields.Skip)
@@ -174,7 +188,6 @@ register_field(me.fields.URLField, ma_fields.String,
 register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
 register_field_builder(me.fields.ListField, ListBuilder)
 register_field_builder(me.fields.MapField, MapBuilder)
-register_field_builder(me.fields.ReferenceField, ReferenceBuilder)
 register_field_builder(me.fields.SortedListField, ListBuilder)
 # TODO: finish fields...
 # me.fields.UUIDField: ma_fields.UUID,
