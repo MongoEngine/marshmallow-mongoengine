@@ -1,5 +1,5 @@
 from marshmallow import ValidationError, fields, missing
-from mongoengine import ValidationError as MongoValidationError, NotRegistered, Document
+from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
 
 
