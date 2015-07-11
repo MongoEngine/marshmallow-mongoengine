@@ -166,7 +166,10 @@ class TestFields(BaseTest):
                 {'id': str(sub_doc_a.id)}, {'_cls': sub_doc_a._class_name},
                 {'id': str(sub_doc_a.id), '_cls': sub_doc_b._class_name},
                 {'id': 'not_an_id', '_cls': sub_doc_a._class_name},
+                {'id': 42, '_cls': sub_doc_a._class_name},
                 {'id': str(sub_doc_a.id), '_cls': 'not_a_class'},
+                {'id': None, '_cls': sub_doc_a._class_name},
+                {'id': str(sub_doc_a.id), '_cls': None},
             ):
             load = DocSchema().load({"generic": bad_generic})
             assert 'generic' in load.errors

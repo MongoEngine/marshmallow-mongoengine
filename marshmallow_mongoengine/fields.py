@@ -193,7 +193,7 @@ class GenericReference(fields.Field):
     def _deserialize(self, value):
         # To deserialize a generic reference, we need a _cls field in addition
         # with the id field
-        if not isinstance(value, dict) or 'id' not in value or '_cls' not in value:
+        if not isinstance(value, dict) or not value.get('id') or not value.get('_cls'):
             raise ValidationError("Need a dict with 'id' and '_cls' fields")
         doc_id = value['id']
         doc_cls_name = value['_cls']
@@ -206,8 +206,8 @@ class GenericReference(fields.Field):
             raise ValidationError("Invalid _cls field `%s`" % doc_cls_name)
         try:
             doc = doc_cls.objects(pk=doc_id).first()
-        except ValueError:
-            # If id is imcompatible with document's id type
+        except (ValueError, TypeError):
+            # If id is incompatible with document's id type
             doc = None
         if not doc:
             raise ValidationError("Unknown document %s %s" % (doc_cls_name, doc_id))
