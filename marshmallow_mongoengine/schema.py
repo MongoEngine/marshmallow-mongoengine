@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import inspect
 import copy
 
 from mongoengine.base import BaseDocument
@@ -20,8 +19,9 @@ class SchemaOpts(ma.SchemaOpts):
         instead of a dict (default: True).
     - ``model_converter``: `ModelConverter` class to use for converting the
         Mongoengine Document model to marshmallow fields.
-    - ``autogenerate_pk_dump_only``: In the document autogenerate it primary_key
+    - ``model_dump_only_pk``: If the document autogenerate it primary_key
         (default behaviour in Mongoengine), ignore it from the incomming data
+        (default: False)
     """
 
     def __init__(self, meta):
@@ -30,8 +30,8 @@ class SchemaOpts(ma.SchemaOpts):
         if self.model and not issubclass(self.model, BaseDocument):
             raise ValueError("`model` must be a subclass of mongoengine.base.BaseDocument")
         self.model_fields_kwargs = getattr(meta, 'model_fields_kwargs', {})
-        self.autogenerate_pk_dump_only = getattr(
-            meta, 'autogenerate_pk_dump_only', True)
+        self.model_dump_only_pk = getattr(
+            meta, 'model_dump_only_pk', False)
         self.model_converter = getattr(meta, 'model_converter', ModelConverter)
         self.model_build_obj = getattr(meta, 'model_build_obj', True)
 
@@ -69,7 +69,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
                 for key, value in field_kwargs.items():
                     setattr(field, key, value)
                 declared_fields[field_name] = field
-        if opts.autogenerate_pk_dump_only and opts.model:
+        if opts.model_dump_only_pk and opts.model:
             # If primary key is automatically generated (nominal case), we
             # must make sure this field is read-only
             if opts.model._auto_id_field is True:

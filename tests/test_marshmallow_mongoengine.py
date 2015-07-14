@@ -256,12 +256,12 @@ class TestModelSchema(BaseTest):
         schema = schemas.StudentSchema()
         dump = schema.dump(student)
         assert not dump.errors
-        load = schema.load(dump.data)
-        assert not load.errors
-        assert type(load.data) == models.Student
-        assert load.data.current_school == student.current_school
-        load.data.age = 25
-        load.data.save()
+        data, errors = schema.load(dump.data)
+        assert not errors
+        assert type(data) == models.Student
+        assert data.current_school == student.current_school
+        data.age = 25
+        data.save()
         student.reload()
         assert student.age == 25
 
@@ -270,7 +270,7 @@ class TestModelSchema(BaseTest):
         class NoLoadIdStudentSchema(schemas.StudentSchema):
             class Meta:
                 model = models.Student
-                autogenerate_pk_dump_only = True
+                model_dump_only_pk = True
         schema = NoLoadIdStudentSchema()
         dump = schema.dump(student)
         assert not dump.errors
