@@ -49,6 +49,6 @@ class TestSkip(BaseTest):
                 model_fields_kwargs = {'field_empty': {'skip_empty': False},
                                        'list_empty': {'skip_empty': False}}
         doc = Doc()
-        dump = DocSchema().dump(doc)
-        assert not dump.errors
-        assert dump.data == {'field_empty': None, 'list_empty': []}
+        data, errors = DocSchema().dump(doc)
+        assert not errors
+        assert data == {'field_empty': None, 'list_empty': []}

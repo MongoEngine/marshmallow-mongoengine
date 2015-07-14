@@ -311,6 +311,7 @@ class TestModelSchema(BaseTest):
 
         schema = StudentSchema()
         data, errors = schema.dump(student)
+        assert not errors
         assert 'full_name' in data
         assert 'date_created' in data
         assert 'dob' not in data
@@ -326,6 +327,7 @@ class TestModelSchema(BaseTest):
 
         schema = StudentSchema()
         data, errors = schema.dump(student)
+        assert not errors
         assert 'full_name' in data
         assert 'id' in data
         assert 'age' in data
@@ -341,6 +343,7 @@ class TestModelSchema(BaseTest):
                 additional = ('date_created', )
         schema = StudentSchema()
         data, errors = schema.dump(student)
+        assert not errors
         assert 'full_name' in data
         assert 'uppername' in data
         assert data['uppername'] == student.full_name.upper()
@@ -355,8 +358,30 @@ class TestModelSchema(BaseTest):
                 model = models.Student
         schema = StudentSchema()
         data, errors = schema.dump(student)
+        assert not errors
         assert 'full_name' in data
         assert data['full_name'] == student.full_name.upper()
+
+    def test_class_inheritance(self, student, models, schemas):
+        class CustomStudentSchema(schemas.StudentSchema):
+            age = fields.Function(lambda v: 'custom-' + str(v.age))
+            custom_field = fields.Function(lambda v: 'custom-field')
+            class Meta:
+                fields = ('full_name', 'age')
+        data, errors = CustomStudentSchema().dump(student)
+        assert not errors
+        assert sorted(list(data.keys())) == sorted(['age', 'full_name'])
+        assert data['age'] == 'custom-' + str(student.age)
+        class ChildCustomStudentSchema(CustomStudentSchema):
+            age = fields.Function(lambda v: 'child-custom-' + str(v.age))
+            class Meta:
+                fields = ('full_name', 'age', 'custom_field')
+                model_fields_kwargs = {'full_name': {'load_only': True}}
+        data, errors = ChildCustomStudentSchema().dump(student)
+        assert not errors
+        assert sorted(list(data.keys())) == sorted(['age', 'custom_field'])
+        assert data['age'] == 'child-custom-' + str(student.age)
+        assert data['custom_field'] == 'custom-field'
 
     def test_check_bad_model(self):
         class DummyClass:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import inspect
+import copy
 
 from mongoengine.base import BaseDocument
 import marshmallow as ma
@@ -15,6 +16,8 @@ class SchemaOpts(ma.SchemaOpts):
         from (required).
     - ``model_fields_kwargs``: Dict of {field: kwargs} to provide as
         additionals argument during fields creation.
+    - ``model_build_obj``: If true, :Schema load: returns a :model: objects
+        instead of a dict (default: True).
     - ``model_converter``: `ModelConverter` class to use for converting the
         Mongoengine Document model to marshmallow fields.
     - ``autogenerate_pk_dump_only``: In the document autogenerate it primary_key
@@ -30,6 +33,7 @@ class SchemaOpts(ma.SchemaOpts):
         self.autogenerate_pk_dump_only = getattr(
             meta, 'autogenerate_pk_dump_only', True)
         self.model_converter = getattr(meta, 'model_converter', ModelConverter)
+        self.model_build_obj = getattr(meta, 'model_build_obj', True)
 
 
 class SchemaMeta(ma.schema.SchemaMeta):
@@ -42,29 +46,40 @@ class SchemaMeta(ma.schema.SchemaMeta):
         Mongoengine model passed as the `model` class Meta option.
         """
         declared_fields = kwargs.get('dict_class', dict)()
-        # inheriting from base classes
-        for base in inspect.getmro(klass):
-            opts = klass.opts
-            if opts.model:
-                Converter = opts.model_converter
-                converter = Converter()
-                declared_fields = converter.fields_for_model(
-                    opts.model,
-                    fields=opts.fields,
-                    fields_kwargs=opts.model_fields_kwargs
-                )
-                break
+        # Generate the fields provided through inheritance
+        opts = klass.opts
+        model = getattr(opts, 'model', None)
+        if model:
+            converter = opts.model_converter()
+            declared_fields.update(converter.fields_for_model(
+                model,
+                fields=opts.fields
+            ))
+        # Generate the fields provided in the current class
         base_fields = super(SchemaMeta, mcs).get_declared_fields(
             klass, *args, **kwargs
         )
         declared_fields.update(base_fields)
+        # Customize fields with provided kwargs
+        for field_name, field_kwargs in klass.opts.model_fields_kwargs.items():
+            field = declared_fields.get(field_name, None)
+            if field:
+                # Copy to prevent alteration of a possible parent class's field
+                field = copy.copy(field)
+                for key, value in field_kwargs.items():
+                    setattr(field, key, value)
+                declared_fields[field_name] = field
         if opts.autogenerate_pk_dump_only and opts.model:
             # If primary key is automatically generated (nominal case), we
             # must make sure this field is read-only
             if opts.model._auto_id_field is True:
-                id_field = base_fields.get(opts.model._meta['id_field'])
+                field_name = opts.model._meta['id_field']
+                id_field = declared_fields.get(field_name)
                 if id_field:
+                    # Copy to prevent alteration of a possible parent class's field
+                    id_field = copy.copy(id_field)
                     id_field.dump_only = True
+                    declared_fields[field_name] = id_field
         return declared_fields
 
 
@@ -83,7 +98,10 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     def make_object(self, data):
-        return self.opts.model(**data)
+        if self.opts.model_build_obj:
+            return self.opts.model(**data)
+        else:
+            return data
 
     def update(self, obj, data):
         """Helper function to update an already existing document
