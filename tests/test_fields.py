@@ -228,15 +228,18 @@ class TestFields(BaseTest):
         class Doc(me.Document):
             id = me.IntField(primary_key=True, default=1)
             map = me.MapField(me.EmbeddedDocumentField(MappedDoc))
+            str = me.MapField(me.StringField())
         fields_ = fields_for_model(Doc)
         assert type(fields_['map']) is fields.Map
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
-        doc = Doc(map={'a': MappedDoc(field='A'), 'b': MappedDoc(field='B')}).save()
+        doc = Doc(map={'a': MappedDoc(field='A'), 'b': MappedDoc(field='B')},
+                  str={'a': 'aaa', 'b': 'bbbb'}).save()
         dump = DocSchema().dump(doc)
         assert not dump.errors
-        assert dump.data == {'map': {'a': {'field': 'A'}, 'b': {'field': 'B'}}, 'id': 1}
+        assert dump.data == {'map': {'a': {'field': 'A'}, 'b': {'field': 'B'}},
+                             'str': {'a': 'aaa', 'b': 'bbbb'}, 'id': 1}
         # Try the load
         load = DocSchema().load(dump.data)
         assert not load.errors

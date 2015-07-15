@@ -250,25 +250,30 @@ class Map(fields.Field):
 
     def __init__(self, mapped, **kwargs):
         self.mapped = mapped
+        self.schema = getattr(mapped, "schema", None)
         super(Map, self).__init__(**kwargs)
 
-    def _serialize(self, value, attr, obj):
-        total_dump = {}
+    def _schema_process(self, action, value):
+        func = getattr(self.schema, action)
+        total = {}
         for k, v in value.items():
-            data, errors = self.mapped.schema.dump(v)
+            data, errors = func(v)
             if errors:
                 raise ValidationError(errors)
-            total_dump[k] = data
-        return total_dump
+            total[k] = data
+        return total
+
+    def _serialize(self, value, attr, obj):
+        if self.schema:
+            return self._schema_process('dump', value)
+        else:
+            return value
 
     def _deserialize(self, value):
-        total_load = {}
-        for k, v in value.items():
-            data, errors = self.mapped.schema.load(v)
-            if errors:
-                raise ValidationError(errors)
-            total_load[k] = data
-        return total_load
+        if self.schema:
+            return self._schema_process('load', value)
+        else:
+            return value
 
 
 class Skip(fields.Field):
