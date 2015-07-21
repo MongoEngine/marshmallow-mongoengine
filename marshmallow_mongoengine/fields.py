@@ -155,11 +155,9 @@ class Reference(fields.Field):
         document_type = self.document_type
         try:
             return document_type.objects.get(pk=value)
-        except document_type.DoesNotExist:
-            raise ValidationError('unknown `%s` document with id `%s`' %
-                                  (document_type.__name__, value))
-        except MongoValidationError:
-            raise ValidationError('invalid ObjectId `%s`' % value)
+        except (document_type.DoesNotExist, MongoValidationError, ValueError, TypeError):
+            raise ValidationError('unknown document %s `%s`' %
+                                  (document_type._class_name, value))
         return value
 
     def _serialize(self, value, attr, obj):
@@ -205,12 +203,10 @@ class GenericReference(fields.Field):
         except NotRegistered:
             raise ValidationError("Invalid _cls field `%s`" % doc_cls_name)
         try:
-            doc = doc_cls.objects(pk=doc_id).first()
-        except (ValueError, TypeError):
-            # If id is incompatible with document's id type
-            doc = None
-        if not doc:
-            raise ValidationError("Unknown document %s %s" % (doc_cls_name, doc_id))
+            doc = doc_cls.objects.get(pk=doc_id)
+        except (doc_cls.DoesNotExist, MongoValidationError, ValueError, TypeError):
+            raise ValidationError('unknown document %s `%s`' %
+                                  (doc_cls_name, value))
         return doc
 
     def _serialize(self, value, attr, obj):

@@ -167,6 +167,7 @@ class TestFields(BaseTest):
                 {'id': str(sub_doc_a.id), '_cls': sub_doc_b._class_name},
                 {'id': 'not_an_id', '_cls': sub_doc_a._class_name},
                 {'id': 42, '_cls': sub_doc_a._class_name},
+                {'id': 'main', '_cls': sub_doc_b._class_name},
                 {'id': str(sub_doc_a.id), '_cls': 'not_a_class'},
                 {'id': None, '_cls': sub_doc_a._class_name},
                 {'id': str(sub_doc_a.id), '_cls': None},
@@ -268,6 +269,12 @@ class TestFields(BaseTest):
         dump = DocSchemaRefAsString().dump(doc)
         assert not dump.errors
         assert dump.data == {'ref': 42, 'id': 'main'}
+        # Test the field loading
         load = DocSchemaRefAsString().load(dump.data)
         assert not load.errors
         assert type(load.data['ref']) == ReferenceDoc
+        # Try invalid loads
+        for bad_ref in (1, 'NaN', None):
+            dump.data['ref'] = bad_ref
+            _, errors = DocSchemaRefAsString().load(dump.data)
+            assert errors, bad_ref
