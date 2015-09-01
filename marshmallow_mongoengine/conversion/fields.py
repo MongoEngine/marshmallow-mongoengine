@@ -177,8 +177,7 @@ register_field(me.fields.FileField, ma_fields.Skip)
 register_field(me.fields.ImageField, ma_fields.Skip)
 register_field(me.fields.IntField, ma_fields.Integer,
                available_params=(params.SizeParam,))
-register_field(me.fields.ObjectIdField, ma_fields.String,
-               available_params=(params.LenghtParam,))
+register_field(me.fields.ObjectIdField, ma_fields.ObjectId)
 register_field(me.fields.SequenceField, ma_fields.Integer,
                available_params=(params.SizeParam,))  # TODO: handle value_decorator
 register_field(me.fields.StringField, ma_fields.String,

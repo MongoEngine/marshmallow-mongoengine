@@ -1,3 +1,4 @@
+import bson
 from marshmallow import ValidationError, fields, missing
 from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
@@ -136,6 +137,20 @@ Int = Integer
 
 
 # ...and add custom ones for mongoengine
+class ObjectId(fields.Field):
+
+    def _deserialize(self, value):
+        try:
+            return bson.ObjectId(value)
+        except:
+            raise ValidationError('invalid ObjectId `%s`' % value)
+
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return missing
+        return str(value)
+
+
 class Reference(fields.Field):
     """
     Marshmallow custom field to map with :class Mongoengine.ReferenceField:

@@ -105,7 +105,7 @@ class TestModelFieldConversion(BaseTest):
 
     def test_fields_for_model_types(self, models):
         fields_ = fields_for_model(models.Student)
-        assert type(fields_['id']) is fields.Str
+        assert type(fields_['id']) is fields.ObjectId
         assert type(fields_['full_name']) is fields.Str
         assert type(fields_['dob']) is fields.DateTime
         assert type(fields_['current_school']) is fields.Reference
