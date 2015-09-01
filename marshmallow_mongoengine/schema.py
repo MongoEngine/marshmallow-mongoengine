@@ -98,7 +98,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     def make_object(self, data):
-        if self.opts.model_build_obj:
+        if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
             return data
