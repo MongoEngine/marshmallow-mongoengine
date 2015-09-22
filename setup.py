@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 REQUIRES = (
-    'marshmallow>=2.0.0b1',
+    'marshmallow>=2.0.0rc1',
     'mongoengine>=0.9.0',
 )
 

@@ -139,7 +139,7 @@ Int = Integer
 # ...and add custom ones for mongoengine
 class ObjectId(fields.Field):
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         try:
             return bson.ObjectId(value)
         except:
@@ -166,7 +166,7 @@ class Reference(fields.Field):
             self.document_type_obj = get_document(self.document_type_obj)
         return self.document_type_obj
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         document_type = self.document_type
         try:
             return document_type.objects.get(pk=value)
@@ -203,7 +203,7 @@ class GenericReference(fields.Field):
                     self.document_class_choices.append(choice)
         super(GenericReference, self).__init__(*args, **kwargs)
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         # To deserialize a generic reference, we need a _cls field in addition
         # with the id field
         if not isinstance(value, dict) or not value.get('id') or not value.get('_cls'):
@@ -236,7 +236,7 @@ class GenericEmbeddedDocument(fields.Field):
     Dynamic embedded document
     """
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         # Cannot deserialize given we have no way knowing wich kind of
         # document is given...
         return missing
@@ -280,7 +280,7 @@ class Map(fields.Field):
         else:
             return value
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         if self.schema:
             return self._schema_process('load', value)
         else:
@@ -292,7 +292,7 @@ class Skip(fields.Field):
     Marshmallow custom field that just ignore the current field
     """
 
-    def _deserialize(self, value):
+    def _deserialize(self, value, attr, data):
         return missing
 
     def _serialize(self, value, attr, obj):
