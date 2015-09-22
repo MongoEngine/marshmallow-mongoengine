@@ -123,6 +123,11 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
             user = User.objects(id=id).first()
             result = UserSchema().update(user, payload)
             result.data is user # True
+
+    Note:
+
+        Given the upadate is done on a existing object, the required param
+        on the fields is ignored
         """
         # TODO: find a cleaner way to skip required validation on update
         required_fields = [k for k, f in self.fields.items() if f.required]
