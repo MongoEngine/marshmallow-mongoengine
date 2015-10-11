@@ -7,6 +7,9 @@ from marshmallow.compat import with_metaclass
 from marshmallow_mongoengine.convert import ModelConverter
 
 
+DEFAULT_SKIP_VALUES = (None, [], {})
+
+
 class SchemaOpts(ma.SchemaOpts):
     """Options class for `ModelSchema`.
     Adds the following options:
@@ -30,10 +33,10 @@ class SchemaOpts(ma.SchemaOpts):
         if self.model and not issubclass(self.model, BaseDocument):
             raise ValueError("`model` must be a subclass of mongoengine.base.BaseDocument")
         self.model_fields_kwargs = getattr(meta, 'model_fields_kwargs', {})
-        self.model_dump_only_pk = getattr(
-            meta, 'model_dump_only_pk', False)
+        self.model_dump_only_pk = getattr(meta, 'model_dump_only_pk', False)
         self.model_converter = getattr(meta, 'model_converter', ModelConverter)
         self.model_build_obj = getattr(meta, 'model_build_obj', True)
+        self.model_skip_values = getattr(meta, 'model_skip_values', DEFAULT_SKIP_VALUES)
 
 
 class SchemaMeta(ma.schema.SchemaMeta):
@@ -97,6 +100,15 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     """
     OPTIONS_CLASS = SchemaOpts
 
+    @ma.post_dump
+    def remove_skip_values(self, data):
+        to_skip = self.opts.model_skip_values
+        return {
+            key: value for key, value in data.items()
+            if value not in to_skip
+        }
+
+    @ma.post_load
     def make_object(self, data):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)

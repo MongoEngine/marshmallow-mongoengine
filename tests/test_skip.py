@@ -46,8 +46,7 @@ class TestSkip(BaseTest):
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
-                model_fields_kwargs = {'field_empty': {'skip_empty': False},
-                                       'list_empty': {'skip_empty': False}}
+                model_skip_values = ()
         doc = Doc()
         data, errors = DocSchema().dump(doc)
         assert not errors
