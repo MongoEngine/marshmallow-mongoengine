@@ -4,7 +4,7 @@ from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
 
 # Republish default fields...
-from marshmallow.fields import *
+from marshmallow.fields import *  # noqa
 
 
 # ...and add custom ones for mongoengine
