@@ -2,14 +2,13 @@
     :target: https://travis-ci.org/touilleMan/marshmallow-mongoengine
     :alt: Travis-CI
 
-=======================
 marshmallow-mongoengine
 =======================
 
 `Mongoengine <http://mongoengine.org>`_ integration with the  `marshmallow <https://marshmallow.readthedocs.org/en/latest/>`_ (de)serialization library.
 
 Declare your models
-===================
+-------------------
 
 .. code-block:: python
 
@@ -28,7 +27,7 @@ Declare your models
         title = me.StringField()
 
 Generate marshmallow schemas
-============================
+----------------------------
 
 .. code-block:: python
 
@@ -45,7 +44,7 @@ Generate marshmallow schemas
     author_schema = AuthorSchema()
 
 (De)serialize your data
-=======================
+-----------------------
 
 .. code-block:: python
 
@@ -59,12 +58,12 @@ Generate marshmallow schemas
     # <Author(name='Chuck Paluhniuk')>
 
 Get it now
-==========
+----------
 ::
 
    pip install -U marshmallow-mongoengine
 
 License
-=======
+-------
 
 MIT licensed. See the bundled `LICENSE <https://github.com/touilleMan/marshmallow-mongoengine/blob/master/LICENSE>`_ file for more details.
