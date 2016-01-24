@@ -27,7 +27,7 @@ class Point(fields.Field):
         try:
             return dict(
                 type="Point",
-                coordinates=[value["longitude"], value["latitude"]]
+                coordinates=[value["x"], value["y"]]
                 )
         except:
             raise ValidationError('invalid Point `%s`' % value)
@@ -36,8 +36,9 @@ class Point(fields.Field):
         if value is None:
             return missing
         return dict(
-                longitude=value["coordinates"][0],
-                latitude=value["coordinates"][1])
+                x=value["coordinates"][0],
+                y=value["coordinates"][1]
+                )
 
 class Reference(fields.Field):
     """
