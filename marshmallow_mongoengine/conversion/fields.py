@@ -178,6 +178,8 @@ register_field(me.fields.ImageField, ma_fields.Skip)
 register_field(me.fields.IntField, ma_fields.Integer,
                available_params=(params.SizeParam,))
 register_field(me.fields.ObjectIdField, ma_fields.ObjectId)
+register_field(me.fields.UUIDField, ma_fields.UUID)
+register_field(me.fields.PointField, ma_fields.Point)
 register_field(me.fields.SequenceField, ma_fields.Integer,
                available_params=(params.SizeParam,))  # TODO: handle value_decorator
 register_field(me.fields.StringField, ma_fields.String,
@@ -189,8 +191,6 @@ register_field_builder(me.fields.ListField, ListBuilder)
 register_field_builder(me.fields.MapField, MapBuilder)
 register_field_builder(me.fields.SortedListField, ListBuilder)
 # TODO: finish fields...
-# me.fields.UUIDField: ma_fields.UUID,
-# me.fields.PointField: ma_fields.Point,
 # me.fields.GeoPointField: ma_fields.GeoPoint,
 # me.fields.LineStringField: ma_fields.LineString,
 # me.fields.PolygonField: ma_fields.Polygon,

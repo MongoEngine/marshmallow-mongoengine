@@ -21,6 +21,23 @@ class ObjectId(fields.Field):
             return missing
         return str(value)
 
+class Point(fields.Field):
+
+    def _deserialize(self, value, attr, data):
+        try:
+            return dict(
+                type="Point",
+                coordinates=[value["longitude"], value["latitude"]]
+                )
+        except:
+            raise ValidationError('invalid Point `%s`' % value)
+
+    def _serialize(self, value, attr, obj):
+        if value is None:
+            return missing
+        return dict(
+                longitude=value["coordinates"][0],
+                latitude=value["coordinates"][1])
 
 class Reference(fields.Field):
     """
