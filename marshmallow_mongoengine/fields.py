@@ -21,6 +21,7 @@ class ObjectId(fields.Field):
             return missing
         return str(value)
 
+
 class Point(fields.Field):
 
     def _deserialize(self, value, attr, data):
@@ -28,7 +29,7 @@ class Point(fields.Field):
             return dict(
                 type='Point',
                 coordinates=[value['x'], value['y']]
-                )
+            )
         except:
             raise ValidationError('invalid Point `%s`' % value)
 
@@ -36,9 +37,10 @@ class Point(fields.Field):
         if value is None:
             return missing
         return dict(
-                x=value['coordinates'][0],
-                y=value['coordinates'][1]
-                )
+            x=value['coordinates'][0],
+            y=value['coordinates'][1]
+        )
+
 
 class Reference(fields.Field):
     """
