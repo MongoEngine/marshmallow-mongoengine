@@ -101,7 +101,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
-    def remove_skip_values(self, data):
+    def _remove_skip_values(self, data):
         to_skip = self.opts.model_skip_values
         return {
             key: value for key, value in data.items()
@@ -109,7 +109,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         }
 
     @ma.post_load
-    def make_object(self, data):
+    def _make_object(self, data):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
@@ -138,7 +138,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
 
     Note:
 
-        Given the upadate is done on a existing object, the required param
+        Given the update is done on a existing object, the required param
         on the fields is ignored
         """
         # TODO: find a cleaner way to skip required validation on update
