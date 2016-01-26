@@ -3,8 +3,8 @@
     :alt: Travis-CI
 
 .. image:: https://readthedocs.org/projects/marshmallow-mongoengine/badge/?version=latest
-:target: http://marshmallow-mongoengine.readthedocs.org/en/latest/?badge=latest
-:alt: Documentation Status
+    :target: http://marshmallow-mongoengine.readthedocs.org/en/latest/?badge=latest
+    :alt: Documentation Status
 
 marshmallow-mongoengine
 =======================
