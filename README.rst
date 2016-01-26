@@ -2,10 +2,16 @@
     :target: https://travis-ci.org/touilleMan/marshmallow-mongoengine
     :alt: Travis-CI
 
+.. image:: https://readthedocs.org/projects/marshmallow-mongoengine/badge/?version=latest
+:target: http://marshmallow-mongoengine.readthedocs.org/en/latest/?badge=latest
+:alt: Documentation Status
+
 marshmallow-mongoengine
 =======================
 
 `Mongoengine <http://mongoengine.org>`_ integration with the  `marshmallow <https://marshmallow.readthedocs.org/en/latest/>`_ (de)serialization library.
+
+See documentation at http://marshmallow-mongoengine.rtfd.org/
 
 Declare your models
 -------------------
