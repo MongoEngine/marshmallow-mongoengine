@@ -1,25 +1,24 @@
-# Config file for automatic testing at travis-ci.org
-
-# Containerized builds
 sudo: false
-
 language: python
-
 services:
-  - mongodb
-
+- mongodb
 python:
-  - "3.5"
-  - "3.4"
-  - "3.3"
-  - "2.7"
-  - "pypy"
-
+- '3.5'
+- '3.4'
+- '3.3'
+- '2.7'
+- pypy
 install:
-  - pip install -r dev-requirements.txt
-  - pip install -U .
-
+- pip install -r dev-requirements.txt
+- pip install -U .
 before_script:
-  - flake8 .
-
+- flake8 .
 script: py.test
+deploy:
+  provider: pypi
+  user: touilleMan
+  on:
+    tags: true
+    repo: touilleMan/marshmallow-mongoengine
+  password:
+    secure: D3RtNf/IiLnYcg0L1RkEzaQNNrJDTm7c2aWwGbMVZHzjMIZR9ccwn0/eUXH7boXN/2bjIR+IOBiiXQNWK4EQskfCCFLNzVgArG1TSp0Kp0BTdNvPPeRdrvCVNF/RCfIdOm/xBpfVKzrQ94CUP/vbHkjUxtFAhKCdOvQsoSERrj21RA7pCZt6FEms95Bo3BHiUgu7PED95Wd8WKyL2mt4SQBXJezE77a5D5Gg6Jv/E0E4i+8dr15m6oPmEVu9ubnSj9NfQcqm9gQJdZC+Bb9A6Fhqgzn6QCoo1Ckyhz8nznNFCGn3WipPuqpnyCPySzKHvRUxdF4CIVUm8H+fYHdFLlN7NZaFsJ+czh5oXazUWvDGjQnbh3zCDCNLLLb3zbc12IpvaaBIf+9ZMCDz5LMPjBBFhqplx6AUkvFG6jkpv74z2dMUB0I/FaDm1c1pQ4u9FeTOkQB+U6pImgbCkHFveU8JvtBVs/mSjCgpelgvMstRLJsfBM2JOCTTuSm0rbAn14MThTmfgBI4+Vk5Aqs0tclTI6zVhvOtfO9T1/7eZwS6AJF8soGnODQbU6aQ3dq0AhYnbvxiA0iFd0h0Iv634ILecXyFPdTWVQN5ObkaP+/8mZdMcu1MNbizSx0fZu0Qv5e9YARJMSXElQWtsUTLc/Ol1QOy/1nn+mOow3KPuwA=
