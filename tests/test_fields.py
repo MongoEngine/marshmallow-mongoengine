@@ -278,3 +278,15 @@ class TestFields(BaseTest):
             dump.data['ref'] = bad_ref
             _, errors = DocSchemaRefAsString().load(dump.data)
             assert errors, bad_ref
+
+    def test_PointField(self):
+        class Doc(me.Document):
+            point = me.PointField()
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc = Doc(point={ 'type': 'Point', 'coordinates': [10, 20] })
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data['point'] == { 'x': 10, 'y': 20 }
+
