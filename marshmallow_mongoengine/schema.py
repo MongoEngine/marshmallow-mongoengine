@@ -25,6 +25,8 @@ class SchemaOpts(ma.SchemaOpts):
     - ``model_dump_only_pk``: If the document autogenerate it primary_key
         (default behaviour in Mongoengine), ignore it from the incomming data
         (default: False)
+    - ``model_skip_values``: Skip the field if it contains one of the given
+        values (default: None, [] and {})
     """
 
     def __init__(self, meta):

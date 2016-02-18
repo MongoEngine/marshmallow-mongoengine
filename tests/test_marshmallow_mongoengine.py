@@ -138,7 +138,6 @@ class TestModelFieldConversion(BaseTest):
         assert validator.max == 99
         assert validator.min == 10
 
-
     def test_sets_allow_none_for_nullable_fields(self, models):
         fields_ = fields_for_model(models.Student)
         assert fields_['dob'].allow_none is True
@@ -390,3 +389,28 @@ class TestModelSchema(BaseTest):
             class BadModelSchema(ModelSchema):
                 class Meta:
                     model = DummyClass
+
+    def test_model_schema_custom_skip_values(self, models, schemas):
+        student = models.Student(
+            full_name='Kevin Smith',
+            age=None,
+            dob=None,
+            date_created=datetime(2016, 2, 14),
+            courses=None).save()
+        # If specified, we don't load the id from the data
+        class CustomSkipValuesStudentSchema(schemas.StudentSchema):
+            class Meta:
+                model = models.Student
+                model_skip_values = (str(student.id), 'Kevin Smith')
+                model_fields_kwargs = {'age': {'allow_none': True}}
+        schema = CustomSkipValuesStudentSchema()
+        assert student.current_school is None
+        assert student.dob is None
+        dump = schema.dump(student)
+        assert not dump.errors
+        assert dump.data == {
+            'dob': None,
+            'age': None,
+            'courses': [],
+            'date_created': '2016-02-14T00:00:00+00:00'
+        }
