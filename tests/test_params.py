@@ -43,6 +43,18 @@ class TestParams(BaseTest):
         assert doc.field_required == 'good_doc'
         assert doc.field_not_required == 'good_doc'
 
+    def test_required_with_default(self):
+        class Doc(me.Document):
+            basic = me.IntField(required=True, default=42)
+            cunning = me.BooleanField(required=True, default=False)
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc, errors = DocSchema().load({})
+        assert not errors
+        assert doc.basic == 42
+        assert doc.cunning is False
+
     def test_default(self):
         def generate_default_value():
             return 'default_generated_value'

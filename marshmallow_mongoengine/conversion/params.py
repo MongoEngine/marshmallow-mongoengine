@@ -30,7 +30,7 @@ class RequiredParam(MetaParam):
         required = getattr(field_me, 'required')
         # If the field has a default value, we don't have to enforce the
         # require check
-        if required and not getattr(field_me, 'default', False):
+        if required and getattr(field_me, 'default', None) is None:
             self.field_kwargs['required'] = required
 
 
