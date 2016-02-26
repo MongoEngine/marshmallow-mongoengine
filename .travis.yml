@@ -9,11 +9,14 @@ python:
 - '2.7'
 - pypy
 install:
+- pip install coveralls pytest-cov
 - pip install -r dev-requirements.txt
 - pip install -U .
 before_script:
 - flake8 .
-script: py.test
+script: py.test --cov=marshmallow_mongoengine
+after_success:
+  - coveralls
 deploy:
   provider: pypi
   user: touilleMan
