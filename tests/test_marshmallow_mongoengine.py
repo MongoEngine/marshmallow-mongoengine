@@ -18,6 +18,7 @@ db = me.connect(TEST_DB)
 
 
 class BaseTest(object):
+
     @classmethod
     def setup_method(self, method):
         # Reset database from previous test run
@@ -32,6 +33,7 @@ def contains_validator(field, v_type):
 
 
 class AnotherIntegerField(me.IntField):
+
     """Use me to test if MRO works like we want"""
     pass
 
@@ -64,12 +66,13 @@ def models():
         age = me.IntField(min_value=10, max_value=99)
         dob = me.DateTimeField(null=True)
         date_created = me.DateTimeField(default=dt.datetime.utcnow,
-                help_text='date the student was created')
+                                        help_text='date the student was created')
         current_school = me.ReferenceField('School')
         courses = me.ListField(me.ReferenceField('Course'))
 
     # So that we can access models with dot-notation, e.g. models.Course
     class _models(object):
+
         def __init__(self):
             self.HeadTeacher = HeadTeacher
             self.Course = Course
@@ -81,19 +84,23 @@ def models():
 @pytest.fixture()
 def schemas(models):
     class CourseSchema(ModelSchema):
+
         class Meta:
             model = models.Course
 
     class SchoolSchema(ModelSchema):
+
         class Meta:
             model = models.School
 
     class StudentSchema(ModelSchema):
+
         class Meta:
             model = models.Student
 
     # Again, so we can use dot-notation
     class _schemas(object):
+
         def __init__(self):
             self.CourseSchema = CourseSchema
             self.SchoolSchema = SchoolSchema
@@ -206,7 +213,7 @@ class TestModelSchema(BaseTest):
                                         'main': 'Mrs. Kensington',
                                         'assistant': 'Mr. Black'
                                     }
-                                },
+                               },
                                started=datetime(2015, 9, 22),
                                grade=3,
                                students=[student]).save()
@@ -231,7 +238,7 @@ class TestModelSchema(BaseTest):
         for field in ('id', 'full_name', 'age'):
             result.data.get(field, '<not_set>') == getattr(student, field)
         # related field dumps to pk
-        assert result.data['current_school'] == student.current_school.pk
+        assert result.data['current_school'] == str(student.current_school.pk)
 
     def test_model_schema_bad_loading(self, models, schemas, school):
         schema = schemas.StudentSchema()
@@ -242,10 +249,10 @@ class TestModelSchema(BaseTest):
         result = schema.load(default_payload)
         assert not result.errors
         for key, value in (
-                ('current_school', 'not an objectId'), ('current_school', None),
-                ('current_school', '5578726b7a58012298a5a7e2'),
-                ('age', 100), ('age', 'nan'),
-            ):
+            ('current_school', 'not an objectId'), ('current_school', None),
+            ('current_school', '5578726b7a58012298a5a7e2'),
+            ('age', 100), ('age', 'nan'),
+        ):
             payload = default_payload.copy()
             payload[key] = value
             result = schema.load(payload)
@@ -267,6 +274,7 @@ class TestModelSchema(BaseTest):
     def test_model_schema_loading_no_load_id(self, models, schemas, student):
         # If specified, we don't load the id from the data
         class NoLoadIdStudentSchema(schemas.StudentSchema):
+
             class Meta:
                 model = models.Student
                 model_dump_only_pk = True
@@ -304,6 +312,7 @@ class TestModelSchema(BaseTest):
 
     def test_fields_option(self, student, models):
         class StudentSchema(ModelSchema):
+
             class Meta:
                 model = models.Student
                 fields = ('full_name', 'date_created')
@@ -320,6 +329,7 @@ class TestModelSchema(BaseTest):
 
     def test_exclude_option(self, student, models):
         class StudentSchema(ModelSchema):
+
             class Meta:
                 model = models.Student
                 exclude = ('date_created', )
@@ -349,10 +359,13 @@ class TestModelSchema(BaseTest):
 
     def test_field_override(self, student, models):
         class MyString(fields.Str):
+
             def _serialize(self, val, attr, obj):
                 return val.upper()
+
         class StudentSchema(ModelSchema):
             full_name = MyString()
+
             class Meta:
                 model = models.Student
         schema = StudentSchema()
@@ -365,14 +378,17 @@ class TestModelSchema(BaseTest):
         class CustomStudentSchema(schemas.StudentSchema):
             age = fields.Function(lambda v: 'custom-' + str(v.age))
             custom_field = fields.Function(lambda v: 'custom-field')
+
             class Meta:
                 fields = ('full_name', 'age')
         data, errors = CustomStudentSchema().dump(student)
         assert not errors
         assert sorted(list(data.keys())) == sorted(['age', 'full_name'])
         assert data['age'] == 'custom-' + str(student.age)
+
         class ChildCustomStudentSchema(CustomStudentSchema):
             age = fields.Function(lambda v: 'child-custom-' + str(v.age))
+
             class Meta:
                 fields = ('full_name', 'age', 'custom_field')
                 model_fields_kwargs = {'full_name': {'load_only': True}}
@@ -387,6 +403,7 @@ class TestModelSchema(BaseTest):
             pass
         with pytest.raises(ValueError):
             class BadModelSchema(ModelSchema):
+
                 class Meta:
                     model = DummyClass
 

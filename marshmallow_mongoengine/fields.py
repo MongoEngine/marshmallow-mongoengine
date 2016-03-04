@@ -43,6 +43,7 @@ class Point(fields.Field):
 
 
 class Reference(fields.Field):
+
     """
     Marshmallow custom field to map with :class Mongoengine.ReferenceField:
     """
@@ -70,10 +71,11 @@ class Reference(fields.Field):
         # Only return the id of the document for serialization
         if value is None:
             return missing
-        return value.id
+        return str(value.id) if isinstance(value.id, bson.ObjectId) else value.id
 
 
 class GenericReference(fields.Field):
+
     """
     Marshmallow custom field to map with :class Mongoengine.GenericReferenceField:
 
@@ -82,6 +84,7 @@ class GenericReference(fields.Field):
     .. note:: Without `choices` param, this field allow to reference to
         any document in the application which can be a security issue.
     """
+
     def __init__(self, *args, **kwargs):
         self.document_class_choices = []
         choices = kwargs.pop('choices', None)
@@ -123,6 +126,7 @@ class GenericReference(fields.Field):
 
 
 class GenericEmbeddedDocument(fields.Field):
+
     """
     Dynamic embedded document
     """
@@ -137,6 +141,7 @@ class GenericEmbeddedDocument(fields.Field):
         from marshmallow_mongoengine.schema import ModelSchema
 
         class NestedSchema(ModelSchema):
+
             class Meta:
                 model = type(value)
         data, errors = NestedSchema().dump(value)
@@ -146,6 +151,7 @@ class GenericEmbeddedDocument(fields.Field):
 
 
 class Map(fields.Field):
+
     """
     Marshmallow custom field to map with :class Mongoengine.Map:
     """
@@ -179,6 +185,7 @@ class Map(fields.Field):
 
 
 class Skip(fields.Field):
+
     """
     Marshmallow custom field that just ignore the current field
     """
