@@ -28,7 +28,7 @@ class Point(fields.Field):
         try:
             return dict(
                 type='Point',
-                coordinates=[value['x'], value['y']]
+                coordinates=[float(value['x']), float(value['y'])]
             )
         except:
             raise ValidationError('invalid Point `%s`' % value)
