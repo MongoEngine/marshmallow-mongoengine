@@ -289,4 +289,13 @@ class TestFields(BaseTest):
         dump = DocSchema().dump(doc)
         assert not dump.errors
         assert dump.data['point'] == { 'x': 10, 'y': 20 }
+        load = DocSchema().load(dump.data)
+        assert not load.errors
+        assert load.data.point == { 'type': 'Point', 'coordinates': [10, 20] }
+        # Deserialize Point with coordinates passed as string
+        data = {'point': { 'x': '10', 'y': '20' }}
+        load = DocSchema().load(data)
+        assert not load.errors
+        assert load.data.point == { 'type': 'Point', 'coordinates': [10, 20] }
+
 
