@@ -297,5 +297,7 @@ class TestFields(BaseTest):
         load = DocSchema().load(data)
         assert not load.errors
         assert load.data.point == { 'type': 'Point', 'coordinates': [10, 20] }
-
-
+        # Try to load invalid coordinates
+        data = {'point': { 'x': '10', 'y': '20foo' }}
+        load = DocSchema().load(data)
+        assert 'point' in load.errors
