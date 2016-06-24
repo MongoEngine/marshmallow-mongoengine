@@ -164,7 +164,7 @@ register_field(me.fields.DecimalField, ma_fields.Decimal,
                available_params=(params.SizeParam, params.PrecisionParam))
 register_field(me.fields.DictField, ma_fields.Raw)
 register_field(me.fields.DynamicField, ma_fields.Raw)
-register_field(me.fields.EmailField, ma_fields.String,
+register_field(me.fields.EmailField, ma_fields.Email,
                available_params=(params.LenghtParam,))
 register_field(me.fields.FloatField, ma_fields.Float,
                available_params=(params.SizeParam,))
@@ -186,7 +186,7 @@ register_field(me.fields.SequenceField, ma_fields.Integer,
                available_params=(params.SizeParam,))  # TODO: handle value_decorator
 register_field(me.fields.StringField, ma_fields.String,
                available_params=(params.LenghtParam,))
-register_field(me.fields.URLField, ma_fields.String,
+register_field(me.fields.URLField, ma_fields.URL,
                available_params=(params.LenghtParam,))
 register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
 register_field_builder(me.fields.ListField, ListBuilder)
