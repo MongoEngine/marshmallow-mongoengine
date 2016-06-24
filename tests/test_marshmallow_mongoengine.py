@@ -69,6 +69,8 @@ def models():
                                         help_text='date the student was created')
         current_school = me.ReferenceField('School')
         courses = me.ListField(me.ReferenceField('Course'))
+        email = me.EmailField(max_length=100)
+        profile_uri = me.URLField(max_length=200)
 
     # So that we can access models with dot-notation, e.g. models.Course
     class _models(object):
@@ -117,6 +119,8 @@ class TestModelFieldConversion(BaseTest):
         assert type(fields_['dob']) is fields.DateTime
         assert type(fields_['current_school']) is fields.Reference
         assert type(fields_['date_created']) is fields.DateTime
+        assert type(fields_['email']) is fields.Email
+        assert type(fields_['profile_uri']) is fields.URL
 
     def test_dict_field(self, models):
         fields_ = fields_for_model(models.Course)
@@ -140,6 +144,12 @@ class TestModelFieldConversion(BaseTest):
         validator = contains_validator(fields_['full_name'], validate.Length)
         assert validator
         assert validator.max == 255
+        validator = contains_validator(fields_['email'], validate.Length)
+        assert validator
+        assert validator.max == 100
+        validator = contains_validator(fields_['profile_uri'], validate.Length)
+        assert validator
+        assert validator.max == 200
         validator = contains_validator(fields_['age'], validate.Range)
         assert validator
         assert validator.max == 99
@@ -197,7 +207,9 @@ class TestModelSchema(BaseTest):
             full_name='Monty Python',
             age=10,
             dob=datetime.utcnow(),
-            current_school=school).save()
+            current_school=school,
+            email='terry.gilliam@montypython.com',
+            profile_uri='http://www.imdb.com/name/nm0000416/').save()
         return student_
 
     @pytest.fixture
@@ -244,7 +256,9 @@ class TestModelSchema(BaseTest):
         schema = schemas.StudentSchema()
         default_payload = {'full_name': 'John Doe', 'age': 25, 'dob': None,
                            'date_created': datetime.utcnow().isoformat(),
-                           'current_school': school.pk}
+                           'current_school': school.pk,
+                           'email': 'john@doe.com',
+                           'profile_uri': 'http://www.perdu.com/'}
         # Make sure default_payload is valid
         result = schema.load(default_payload)
         assert not result.errors
@@ -252,6 +266,7 @@ class TestModelSchema(BaseTest):
             ('current_school', 'not an objectId'), ('current_school', None),
             ('current_school', '5578726b7a58012298a5a7e2'),
             ('age', 100), ('age', 'nan'),
+            ('email', 'johndoe@badmail'), ('profile_uri', 'bad_uri')
         ):
             payload = default_payload.copy()
             payload[key] = value
@@ -325,6 +340,8 @@ class TestModelSchema(BaseTest):
         assert 'dob' not in data
         assert 'age' not in data
         assert 'id' not in data
+        assert 'email' not in data
+        assert 'profile_uri' not in data
         assert len(data.keys()) == 2
 
     def test_exclude_option(self, student, models):
@@ -341,6 +358,8 @@ class TestModelSchema(BaseTest):
         assert 'id' in data
         assert 'age' in data
         assert 'dob' in data
+        assert 'email' in data
+        assert 'profile_uri' in data
         assert 'date_created' not in data
 
     def test_additional_option(self, student, models):
@@ -429,5 +448,7 @@ class TestModelSchema(BaseTest):
             'dob': None,
             'age': None,
             'courses': [],
-            'date_created': '2016-02-14T00:00:00+00:00'
+            'date_created': '2016-02-14T00:00:00+00:00',
+            'email': None,
+            'profile_uri': None
         }
