@@ -1,13 +1,13 @@
-.. image:: https://travis-ci.org/touilleMan/marshmallow-mongoengine.svg?branch=master
-    :target: https://travis-ci.org/touilleMan/marshmallow-mongoengine
+.. image:: https://travis-ci.org/MongoEngine/marshmallow-mongoengine.svg?branch=master
+    :target: https://travis-ci.org/MongoEngine/marshmallow-mongoengine
     :alt: Travis-CI
 
 .. image:: https://readthedocs.org/projects/marshmallow-mongoengine/badge/?version=latest
     :target: http://marshmallow-mongoengine.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://coveralls.io/repos/github/touilleMan/marshmallow-mongoengine/badge.svg?branch=master
-    :target: https://coveralls.io/github/touilleMan/marshmallow-mongoengine?branch=master
+.. image:: https://coveralls.io/repos/github/MongoEngine/marshmallow-mongoengine/badge.svg?branch=master
+    :target: https://coveralls.io/github/MongoEngine/marshmallow-mongoengine?branch=master
     :alt: Code Coverage
 
 marshmallow-mongoengine
