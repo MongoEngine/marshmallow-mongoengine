@@ -1,3 +1,8 @@
+Repository has changed !
+------------------------
+
+Marshmallow-Mongoengine is now [part of the MongoEngine project](https://github.com/MongoEngine/marshmallow-mongoengine).
+
 .. image:: https://travis-ci.org/touilleMan/marshmallow-mongoengine.svg?branch=master
     :target: https://travis-ci.org/touilleMan/marshmallow-mongoengine
     :alt: Travis-CI
