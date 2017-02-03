@@ -76,3 +76,21 @@ class TestParams(BaseTest):
         assert not errors
         assert doc.field_with_default == 'default_value'
         assert doc.field_required_with_default == 'default_generated_value'
+
+    def test_choices(self):
+        class Doc(me.Document):
+            CHOICES = (
+                (0, 'zero'),
+                (1, 'one'),
+            )
+            basic = me.IntField(choices=CHOICES)
+
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc, errors = DocSchema().load({'basic': 0})
+        assert not errors
+        assert doc.basic == 0
+
+        doc, errors = DocSchema().load({'basic': 3})
+        assert errors == {'basic': ['Not a valid choice.']}
