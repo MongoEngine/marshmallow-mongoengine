@@ -78,8 +78,11 @@ class ChoiceParam(MetaParam):
     def __init__(self, field_me):
         super(ChoiceParam, self).__init__()
         choices = getattr(field_me, 'choices', None)
+        labels = None
+        if choices and isinstance(choices[0], (list, tuple)):
+            choices, labels = zip(*choices)
         if choices:
-            self.field_kwargs['validate'].append(validate.OneOf(choices))
+            self.field_kwargs['validate'].append(validate.OneOf(choices, labels))
 
 
 class PrecisionParam(MetaParam):
