@@ -7,7 +7,7 @@ python:
 - '3.4'
 - '3.3'
 - '2.7'
-- pypy
+- "pypy-5.3.1"
 install:
 - pip install coveralls pytest-cov
 - pip install -r dev-requirements.txt
