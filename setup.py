@@ -16,7 +16,7 @@ def read(fname):
 
 setup(
     name='marshmallow-mongoengine',
-    version='0.7.8',
+    version='0.7.9',
     description='Mongoengine integration with the marshmallow '
                 '(de)serialization library',
     long_description=read('README.rst'),
