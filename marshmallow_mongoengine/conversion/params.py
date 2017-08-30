@@ -46,6 +46,14 @@ class LenghtParam(MetaParam):
         self.field_kwargs['validate'].append(validate.Length(**maxmin_args))
 
 
+class RegexParam(MetaParam):
+    def __init__(self, field_me):
+        super(RegexParam, self).__init__()
+        regex = getattr(field_me, 'regex', None)
+        if regex:
+            self.field_kwargs['validate'].append(validate.Regexp(regex))
+
+
 class SizeParam(MetaParam):
     def __init__(self, field_me):
         super(SizeParam, self).__init__()

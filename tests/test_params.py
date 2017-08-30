@@ -94,3 +94,18 @@ class TestParams(BaseTest):
 
         doc, errors = DocSchema().load({'basic': 3})
         assert errors == {'basic': ['Not a valid choice.']}
+
+    def test_regex(self):
+        class Doc(me.Document):
+            basic = me.StringField(regex=r'^[1-9]{6}$')
+
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+
+        doc, errors = DocSchema().load({'basic': '112233'})
+        assert not errors
+        assert doc.basic == '112233'
+
+        doc, errors = DocSchema().load({'basic': '1A2B3CDD'})
+        assert errors == {'basic': ['String does not match expected pattern.']}

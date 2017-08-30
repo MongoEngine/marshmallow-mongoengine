@@ -185,7 +185,7 @@ register_field(me.fields.PointField, ma_fields.Point)
 register_field(me.fields.SequenceField, ma_fields.Integer,
                available_params=(params.SizeParam,))  # TODO: handle value_decorator
 register_field(me.fields.StringField, ma_fields.String,
-               available_params=(params.LenghtParam,))
+               available_params=(params.LenghtParam, params.RegexParam))
 register_field(me.fields.URLField, ma_fields.URL,
                available_params=(params.LenghtParam,))
 register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
