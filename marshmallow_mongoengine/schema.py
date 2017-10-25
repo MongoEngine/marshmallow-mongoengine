@@ -29,8 +29,8 @@ class SchemaOpts(ma.SchemaOpts):
         values (default: None, [] and {})
     """
 
-    def __init__(self, meta):
-        super(SchemaOpts, self).__init__(meta)
+    def __init__(self, meta, *args, **kwargs):
+        super(SchemaOpts, self).__init__(meta, *args, **kwargs)
         self.model = getattr(meta, 'model', None)
         if self.model and not issubclass(self.model, BaseDocument):
             raise ValueError("`model` must be a subclass of mongoengine.base.BaseDocument")

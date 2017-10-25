@@ -2,12 +2,6 @@
 from setuptools import setup, find_packages
 
 
-REQUIRES = (
-    'marshmallow>=2.1.0',
-    'mongoengine>=0.9.0',
-)
-
-
 def read(fname):
     with open(fname) as fp:
         content = fp.read()
@@ -26,7 +20,11 @@ setup(
     packages=find_packages(exclude=("test*", )),
     package_dir={'marshmallow-mongoengine': 'marshmallow-mongoengine'},
     include_package_data=True,
-    install_requires=REQUIRES,
+    install_requires=['mongoengine>=0.9.0'],
+    extras_require={
+        'toasted': ['toastedmarshmallow>=0.2.6'],
+        'marshmallow': ['marshmallow>=2.1.0'],
+    },
     license='MIT',
     zip_safe=False,
     keywords='mongoengine marshmallow',

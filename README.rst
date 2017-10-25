@@ -13,7 +13,7 @@
 marshmallow-mongoengine
 =======================
 
-`Mongoengine <http://mongoengine.org>`_ integration with the  `marshmallow <https://marshmallow.readthedocs.org/en/latest/>`_ (de)serialization library.
+`Mongoengine <http://mongoengine.org>`_ integration with the  `marshmallow <https://marshmallow.readthedocs.org/en/latest/>`_ (de)serialization library (`toastedmarshamallow <https://pypi.python.org/pypi/toastedmarshmallow>`_ also supported).
 
 See documentation at http://marshmallow-mongoengine.rtfd.org/
 

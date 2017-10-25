@@ -13,7 +13,7 @@ class ObjectId(fields.Field):
     def _deserialize(self, value, attr, data):
         try:
             return bson.ObjectId(value)
-        except:
+        except Exception:
             raise ValidationError('invalid ObjectId `%s`' % value)
 
     def _serialize(self, value, attr, obj):
@@ -30,7 +30,7 @@ class Point(fields.Field):
                 type='Point',
                 coordinates=[float(value['x']), float(value['y'])]
             )
-        except:
+        except Exception:
             raise ValidationError('invalid Point `%s`' % value)
 
     def _serialize(self, value, attr, obj):
