@@ -6,9 +6,8 @@ python:
 - '3.6'
 - '3.5'
 - '2.7'
-- "pypy-5.3.1"
 env:
-- MARSHMALLOW_BACKEND=mashmallow
+- MARSHMALLOW_BACKEND=marshmallow
 - MARSHMALLOW_BACKEND=toasted
 install:
 - pip install coveralls pytest-cov
