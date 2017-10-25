@@ -2,6 +2,10 @@
 History
 =======
 
+0.9.1 (2017-10-25)
+-------------------
+ - Correct error on release
+
 0.9.0 (2017-10-25)
 -------------------
  - Add support for `toastedmarshamallow <https://pypi.python.org/pypi/toastedmarshmallow>`_
