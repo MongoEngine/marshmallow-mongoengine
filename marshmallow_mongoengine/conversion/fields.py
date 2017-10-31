@@ -172,6 +172,11 @@ register_field(me.fields.GenericEmbeddedDocumentField,
                ma_fields.GenericEmbeddedDocument)
 register_field_builder(me.fields.GenericReferenceField, GenericReferenceBuilder)
 register_field_builder(me.fields.ReferenceField, ReferenceBuilder)
+# LazyReferenceField and GenericLazyReference need mongoengine >= 0.15.0
+if hasattr(me.fields, 'LazyReferenceField'):
+    register_field_builder(me.fields.LazyReferenceField, ReferenceBuilder)
+if hasattr(me.fields, 'GenericLazyReferenceField'):
+    register_field_builder(me.fields.GenericLazyReferenceField, GenericReferenceBuilder)
 # FilesField and ImageField can't be simply displayed...
 register_field(me.fields.FileField, ma_fields.Skip)
 register_field(me.fields.ImageField, ma_fields.Skip)

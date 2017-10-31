@@ -68,10 +68,10 @@ class Reference(fields.Field):
         return value
 
     def _serialize(self, value, attr, obj):
-        # Only return the id of the document for serialization
+        # Only return the pk of the document for serialization
         if value is None:
             return missing
-        return str(value.id) if isinstance(value.id, bson.ObjectId) else value.id
+        return str(value.pk) if isinstance(value.pk, bson.ObjectId) else value.pk
 
 
 class GenericReference(fields.Field):
@@ -119,10 +119,10 @@ class GenericReference(fields.Field):
         return doc
 
     def _serialize(self, value, attr, obj):
-        # Only return the id of the document for serialization
+        # Only return the pk of the document for serialization
         if value is None:
             return missing
-        return value.id
+        return value.pk
 
 
 class GenericEmbeddedDocument(fields.Field):

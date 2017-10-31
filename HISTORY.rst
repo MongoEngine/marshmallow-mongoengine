@@ -2,6 +2,10 @@
 History
 =======
 
+0.10.0 (2017-11-06)
+-------------------
+ - Add support for mongoengine.LazyReferenceField and mongoengine.GenericLazyReferenceField
+
 0.9.1 (2017-10-25)
 -------------------
  - Correct error on release

@@ -199,6 +199,72 @@ class TestFields(BaseTest):
                                                   "_cls": sub_doc_b._class_name}})
         assert 'generic' in load.errors
 
+    @pytest.mark.skipif(
+        not hasattr(me, 'GenericLazyReferenceField'),
+        reason='GenericLazyReferenceField requires mongoengine>=0.15.0')
+    def test_GenericLazyReferenceField(self):
+        class Doc(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            generic = me.GenericLazyReferenceField()
+        class SubDocA(me.Document):
+            field_a = me.StringField(primary_key=True, default='doc_a_pk')
+        class SubDocB(me.Document):
+            field_b = me.IntField(primary_key=True, default=42)
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['generic']) is fields.GenericReference
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        # Test dump
+        sub_doc_a = SubDocA().save()
+        sub_doc_b = SubDocB().save()
+        doc = Doc(generic=sub_doc_a)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'generic': 'doc_a_pk', 'id': 'main'}
+        doc.generic = sub_doc_b
+        doc.save()
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'generic': 42, 'id': 'main'}
+        # Test load
+        for bad_generic in (
+                {'id': str(sub_doc_a.id)}, {'_cls': sub_doc_a._class_name},
+                {'id': str(sub_doc_a.id), '_cls': sub_doc_b._class_name},
+                {'id': 'not_an_id', '_cls': sub_doc_a._class_name},
+                {'id': 42, '_cls': sub_doc_a._class_name},
+                {'id': 'main', '_cls': sub_doc_b._class_name},
+                {'id': str(sub_doc_a.id), '_cls': 'not_a_class'},
+                {'id': None, '_cls': sub_doc_a._class_name},
+                {'id': str(sub_doc_a.id), '_cls': None},
+            ):
+            load = DocSchema().load({"generic": bad_generic})
+            assert 'generic' in load.errors
+        load = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
+                                             "_cls": sub_doc_a._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_a
+        load = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
+                                             "_cls": sub_doc_b._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_b
+        # Teste choices param
+        class DocOnlyA(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            generic = me.GenericLazyReferenceField(choices=[SubDocA])
+        class DocOnlyASchema(ModelSchema):
+            class Meta:
+                model = DocOnlyA
+        load = DocOnlyASchema().load({})
+        assert not load.errors
+        load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
+                                                  "_cls": sub_doc_a._class_name}})
+        assert not load.errors
+        assert load.data['generic'] == sub_doc_a
+        load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
+                                                  "_cls": sub_doc_b._class_name}})
+        assert 'generic' in load.errors
+
     def test_GenericEmbeddedDocumentField(self):
         class Doc(me.Document):
             id = me.StringField(primary_key=True, default='main')
@@ -259,6 +325,48 @@ class TestFields(BaseTest):
                 model = Doc
         ref_doc = ReferenceDoc().save()
         doc = Doc(ref=ref_doc)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'ref': 42, 'id': 'main'}
+        # Try the same with reference document type passed as string
+        class DocSchemaRefAsString(Schema):
+            id = fields.String()
+            ref = fields.Reference('ReferenceDoc')
+        dump = DocSchemaRefAsString().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'ref': 42, 'id': 'main'}
+        # Test the field loading
+        load = DocSchemaRefAsString().load(dump.data)
+        assert not load.errors
+        assert type(load.data['ref']) == ReferenceDoc
+        # Try invalid loads
+        for bad_ref in (1, 'NaN', None):
+            dump.data['ref'] = bad_ref
+            _, errors = DocSchemaRefAsString().load(dump.data)
+            assert errors, bad_ref
+
+    @pytest.mark.skipif(
+        not hasattr(me, 'LazyReferenceField'),
+        reason='LazyReferenceField requires mongoengine>=0.15.0')
+    def test_LazyReferenceField(self):
+        class ReferenceDoc(me.Document):
+            field = me.IntField(primary_key=True, default=42)
+        class Doc(me.Document):
+            id = me.StringField(primary_key=True, default='main')
+            ref = me.LazyReferenceField(ReferenceDoc)
+        fields_ = fields_for_model(Doc)
+        assert type(fields_['ref']) is fields.Reference
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        ref_doc = ReferenceDoc().save()
+        doc = Doc(ref=ref_doc)
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data == {'ref': 42, 'id': 'main'}
+        # Force ref field to be LazyReference
+        doc.save()
+        doc.reload()
         dump = DocSchema().dump(doc)
         assert not dump.errors
         assert dump.data == {'ref': 42, 'id': 'main'}
