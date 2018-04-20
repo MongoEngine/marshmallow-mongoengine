@@ -4,6 +4,7 @@ import datetime as dt
 import decimal
 from datetime import datetime
 
+from marshmallow.exceptions import ValidationError
 import mongoengine as me
 
 from marshmallow import validate
@@ -236,8 +237,8 @@ class TestModelSchema(BaseTest):
         payload = {'dob': dob.isoformat(), 'age': 59}
         full_name = student.full_name
         result = schemas.StudentSchema().update(student, payload)
-        assert not result.errors
-        assert result.data is student
+        assert result
+        assert result is student
         assert student.dob == dob
         assert student.age == 59
         # Make sure default values doesn't mess
@@ -246,11 +247,11 @@ class TestModelSchema(BaseTest):
     def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()
         result = schema.dump(student)
-        assert not result.errors
+        assert result
         for field in ('id', 'full_name', 'age'):
-            result.data.get(field, '<not_set>') == getattr(student, field)
+            result.get(field, '<not_set>') == getattr(student, field)
         # related field dumps to pk
-        assert result.data['current_school'] == str(student.current_school.pk)
+        assert result['current_school'] == str(student.current_school.pk)
 
     def test_model_schema_bad_loading(self, models, schemas, school):
         schema = schemas.StudentSchema()
@@ -261,7 +262,7 @@ class TestModelSchema(BaseTest):
                            'profile_uri': 'http://www.perdu.com/'}
         # Make sure default_payload is valid
         result = schema.load(default_payload)
-        assert not result.errors
+        assert result
         for key, value in (
             ('current_school', 'not an objectId'), ('current_school', None),
             ('current_school', '5578726b7a58012298a5a7e2'),
@@ -270,16 +271,18 @@ class TestModelSchema(BaseTest):
         ):
             payload = default_payload.copy()
             payload[key] = value
-            result = schema.load(payload)
-            assert result.errors, (key, value)
+            try:
+                result = schema.load(payload)
+            except ValidationError as err:
+                assert err.messages[key]
 
     def test_model_schema_loading(self, models, schemas, student):
         schema = schemas.StudentSchema()
-        dump = schema.dump(student)
-        assert not dump.errors
-        data, errors = schema.load(dump.data)
-        assert not errors
-        assert type(data) == models.Student
+        dumped_data = schema.dump(student)
+        assert dumped_data
+        data = schema.load(dumped_data)
+        assert data
+        assert isinstance(data, models.Student)
         assert data.current_school == student.current_school
         data.age = 25
         data.save()
@@ -294,36 +297,36 @@ class TestModelSchema(BaseTest):
                 model = models.Student
                 model_dump_only_pk = True
         schema = NoLoadIdStudentSchema()
-        dump = schema.dump(student)
-        assert not dump.errors
+        dumped_data = schema.dump(student)
+        assert dumped_data
         # Don't skip id in serialization
-        assert dump.data.get('id', '<not_set>') == str(student.id)
+        assert dumped_data.get('id', '<not_set>') == str(student.id)
         # Id is autogenerate, thus it cannot be loaded by the unmarshaller
-        load = schema.load(dump.data)
-        assert not load.errors
-        assert not load.data.id
+        loaded_data = schema.load(dumped_data)
+        assert loaded_data
+        assert not loaded_data.id
 
     def test_model_schema_loading_school(self, models, schemas, school):
         schema = schemas.SchoolSchema()
-        dump = schema.dump(school)
-        assert not dump.errors
-        load = schema.load(dump.data)
-        assert not load.errors
-        assert type(load.data) == models.School
+        dumped_data = schema.dump(school)
+        assert dumped_data
+        loaded_data = schema.load(dumped_data)
+        assert loaded_data
+        assert isinstance(loaded_data, models.School)
         # Check embedded document
-        assert type(load.data.headteacher) == models.HeadTeacher
-        assert load.data.headteacher.full_name == school.headteacher.full_name
+        assert isinstance(loaded_data.headteacher, models.HeadTeacher)
+        assert loaded_data.headteacher.full_name == school.headteacher.full_name
 
     def test_model_schema_loading_course(self, models, schemas, course):
         schema = schemas.CourseSchema()
-        dump = schema.dump(course)
-        assert not dump.errors
-        load = schema.load(dump.data)
-        assert not load.errors
-        assert type(load.data) == models.Course
+        dumped_data = schema.dump(course)
+        assert dumped_data
+        loaded_data = schema.load(dumped_data)
+        assert loaded_data
+        assert isinstance(loaded_data, models.Course)
         # Check dict field
-        assert isinstance(load.data.prereqs, dict)
-        assert load.data.prereqs == course.prereqs
+        assert isinstance(loaded_data.prereqs, dict)
+        assert loaded_data.prereqs == course.prereqs
 
     def test_fields_option(self, student, models):
         class StudentSchema(ModelSchema):
@@ -333,8 +336,8 @@ class TestModelSchema(BaseTest):
                 fields = ('full_name', 'date_created')
 
         schema = StudentSchema()
-        data, errors = schema.dump(student)
-        assert not errors
+        data = schema.dump(student)
+        assert data
         assert 'full_name' in data
         assert 'date_created' in data
         assert 'dob' not in data
@@ -352,8 +355,8 @@ class TestModelSchema(BaseTest):
                 exclude = ('date_created', )
 
         schema = StudentSchema()
-        data, errors = schema.dump(student)
-        assert not errors
+        data = schema.dump(student)
+        assert data
         assert 'full_name' in data
         assert 'id' in data
         assert 'age' in data
@@ -370,8 +373,8 @@ class TestModelSchema(BaseTest):
                 model = models.Student
                 additional = ('date_created', )
         schema = StudentSchema()
-        data, errors = schema.dump(student)
-        assert not errors
+        data = schema.dump(student)
+        assert data
         assert 'full_name' in data
         assert 'uppername' in data
         assert data['uppername'] == student.full_name.upper()
@@ -388,8 +391,8 @@ class TestModelSchema(BaseTest):
             class Meta:
                 model = models.Student
         schema = StudentSchema()
-        data, errors = schema.dump(student)
-        assert not errors
+        data = schema.dump(student)
+        assert data
         assert 'full_name' in data
         assert data['full_name'] == student.full_name.upper()
 
@@ -400,8 +403,8 @@ class TestModelSchema(BaseTest):
 
             class Meta:
                 fields = ('full_name', 'age')
-        data, errors = CustomStudentSchema().dump(student)
-        assert not errors
+        data = CustomStudentSchema().dump(student)
+        assert data
         assert sorted(list(data.keys())) == sorted(['age', 'full_name'])
         assert data['age'] == 'custom-' + str(student.age)
 
@@ -411,8 +414,8 @@ class TestModelSchema(BaseTest):
             class Meta:
                 fields = ('full_name', 'age', 'custom_field')
                 model_fields_kwargs = {'full_name': {'load_only': True}}
-        data, errors = ChildCustomStudentSchema().dump(student)
-        assert not errors
+        data = ChildCustomStudentSchema().dump(student)
+        assert data
         assert sorted(list(data.keys())) == sorted(['age', 'custom_field'])
         assert data['age'] == 'child-custom-' + str(student.age)
         assert data['custom_field'] == 'custom-field'
@@ -442,9 +445,9 @@ class TestModelSchema(BaseTest):
         schema = CustomSkipValuesStudentSchema()
         assert student.current_school is None
         assert student.dob is None
-        dump = schema.dump(student)
-        assert not dump.errors
-        assert dump.data == {
+        dumped_data = schema.dump(student)
+        assert dumped_data
+        assert dumped_data == {
             'dob': None,
             'age': None,
             'courses': [],
