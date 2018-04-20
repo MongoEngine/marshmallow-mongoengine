@@ -147,14 +147,14 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         required_fields = [k for k, f in self.fields.items() if f.required]
         for field in required_fields:
             self.fields[field].required = False
-        loaded_data, errors = self._do_load(data, postprocess=False)
+        loaded_data = self._do_load(data, postprocess=False)
         for field in required_fields:
             self.fields[field].required = True
-        if not errors:
+        if loaded_data:
             # Update the given obj fields
             for k, v in loaded_data.items():
                 # Skip default values that have been automatically
                 # added during unserialization
                 if k in data:
                     setattr(obj, k, v)
-        return ma.UnmarshalResult(data=obj, errors=errors)
+        return obj
