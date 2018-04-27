@@ -135,7 +135,7 @@ we only have to redefine the `property` field and we're done !
         class Meta:
             model = User
 
-        priority = ma.fields.method(serialize="_priority_serializer", deserialize="_priority_deserializer")
+        priority = ma.fields.Method(serialize="_priority_serializer", deserialize="_priority_deserializer")
 
         def _priority_serializer(self, obj):
             if obj.priority == 1:
