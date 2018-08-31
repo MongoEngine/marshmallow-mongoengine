@@ -34,9 +34,9 @@ class RequiredParam(MetaParam):
             self.field_kwargs['required'] = required
 
 
-class LenghtParam(MetaParam):
+class LengthParam(MetaParam):
     def __init__(self, field_me):
-        super(LenghtParam, self).__init__()
+        super(LengthParam, self).__init__()
         # Add a length validator for max_length/min_length
         maxmin_args = {}
         if hasattr(field_me, 'max_length'):

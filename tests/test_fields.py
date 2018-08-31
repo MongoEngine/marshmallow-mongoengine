@@ -409,3 +409,26 @@ class TestFields(BaseTest):
         data = {'point': { 'x': '10', 'y': '20foo' }}
         load = DocSchema().load(data)
         assert 'point' in load.errors
+
+    def test_LineStringField(self):
+        class Doc(me.Document):
+            line = me.LineStringField()
+        class DocSchema(ModelSchema):
+            class Meta:
+                model = Doc
+        doc = Doc(line={'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]})
+        dump = DocSchema().dump(doc)
+        assert not dump.errors
+        assert dump.data['line']['coordinates'] == [[10, 20], [30, 40]]
+        load = DocSchema().load(dump.data)
+        assert not load.errors
+        assert load.data.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
+        # Deserialize LineString with coordinates passed as strings
+        data = {'line': {'coordinates': [['10', '20'], ['30', '40']]}}
+        load = DocSchema().load(data)
+        assert not load.errors
+        assert load.data.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
+        # Try to load invalid coordinates
+        data = {'line': {'coordinates': [['10', '20foo']]}}
+        load = DocSchema().load(data)
+        assert 'line' in load.errors
