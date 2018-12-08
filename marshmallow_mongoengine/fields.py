@@ -1,4 +1,5 @@
 import bson
+import uuid
 from marshmallow import ValidationError, fields, missing
 from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
@@ -71,7 +72,7 @@ class Reference(fields.Field):
         # Only return the pk of the document for serialization
         if value is None:
             return missing
-        return str(value.pk) if isinstance(value.pk, bson.ObjectId) else value.pk
+        return str(value.pk) if isinstance(value.pk, (bson.ObjectId, uuid.UUID)) else value.pk
 
 
 class GenericReference(fields.Field):
