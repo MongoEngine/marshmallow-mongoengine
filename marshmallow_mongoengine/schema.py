@@ -103,7 +103,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
-    def _remove_skip_values(self, data):
+    def _remove_skip_values(self, data, many, **kwargs):
         to_skip = self.opts.model_skip_values
         return {
             key: value for key, value in data.items()
@@ -111,7 +111,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         }
 
     @ma.post_load
-    def _make_object(self, data):
+    def _make_object(self, data, many, **kwargs):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
