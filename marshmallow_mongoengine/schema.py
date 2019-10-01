@@ -3,7 +3,7 @@ import copy
 
 from mongoengine.base import BaseDocument
 import marshmallow as ma
-from marshmallow.compat import with_metaclass
+from six import with_metaclass
 from marshmallow_mongoengine.convert import ModelConverter
 
 
