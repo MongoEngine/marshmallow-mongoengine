@@ -144,10 +144,7 @@ class GenericEmbeddedDocument(fields.Field):
 
             class Meta:
                 model = type(value)
-        data, errors = NestedSchema().dump(value)
-        if errors:
-            raise ValidationError(errors)
-        return data
+        return NestedSchema().dump(value)
 
 
 class Map(fields.Field):
