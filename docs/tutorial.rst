@@ -54,7 +54,7 @@ Finally it's time to use our schema to load/dump documents:
     >>> u.tasks
     [<Task: Task object>]
     >>> user_schema.dump(u)
-    UnmarshalResult({"name": "John Doe", "email": "jdoe@example.com", "password": "123456", "tasks": [{"content": "Find a proper password", "priority": 1}]})
+    {"name": "John Doe", "email": "jdoe@example.com", "password": "123456", "tasks": [{"content": "Find a proper password", "priority": 1}]}
 
 
 If the document already exists, we can update it using `update`
