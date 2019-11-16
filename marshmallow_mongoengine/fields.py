@@ -1,4 +1,5 @@
 import bson
+from bson.errors import BSONError
 from marshmallow import ValidationError, fields, missing
 from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
@@ -12,7 +13,7 @@ class ObjectId(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         try:
             return bson.ObjectId(value)
-        except ValueError as e:
+        except BSONError as e:
             raise ValidationError('invalid ObjectId `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -29,7 +30,7 @@ class Point(fields.Field):
                 type='Point',
                 coordinates=[float(value['x']), float(value['y'])]
             )
-        except ValueError as e:
+        except BSONError as e:
             raise ValidationError('invalid Point `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -143,9 +144,7 @@ class GenericEmbeddedDocument(fields.Field):
 
             class Meta:
                 model = type(value)
-        data, errors = NestedSchema().dump(value)
-        if errors:
-            raise ValidationError(errors)
+        data = NestedSchema().dump(value)
         return data
 
 
@@ -164,9 +163,7 @@ class Map(fields.Field):
         func = getattr(self.schema, action)
         total = {}
         for k, v in value.items():
-            data, errors = func(v)
-            if errors:
-                raise ValidationError(errors)
+            data = func(v)
             total[k] = data
         return total
 
