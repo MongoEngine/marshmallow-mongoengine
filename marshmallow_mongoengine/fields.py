@@ -5,7 +5,6 @@ from mongoengine.base import get_document
 
 # Republish default fields...
 from marshmallow.fields import *  # noqa
-from functools import partial
 
 
 class ObjectId(fields.Field):
