@@ -3,7 +3,7 @@ import copy
 
 from mongoengine.base import BaseDocument
 import marshmallow as ma
-from marshmallow.compat import with_metaclass
+import six
 from marshmallow_mongoengine.convert import ModelConverter
 
 
@@ -29,8 +29,8 @@ class SchemaOpts(ma.SchemaOpts):
         values (default: None, [] and {})
     """
 
-    def __init__(self, meta):
-        super(SchemaOpts, self).__init__(meta)
+    def __init__(self, meta, **kwargs):
+        super(SchemaOpts, self).__init__(meta, **kwargs)
         self.model = getattr(meta, 'model', None)
         if self.model and not issubclass(self.model, BaseDocument):
             raise ValueError("`model` must be a subclass of mongoengine.base.BaseDocument")
@@ -88,7 +88,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
         return declared_fields
 
 
-class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
+class ModelSchema(six.with_metaclass(SchemaMeta, ma.Schema)):
     """Base class for Mongoengine model-based Schemas.
 
     Example: ::
@@ -103,7 +103,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
-    def _remove_skip_values(self, data):
+    def _remove_skip_values(self, data, **kwargs):
         to_skip = self.opts.model_skip_values
         return {
             key: value for key, value in data.items()
@@ -111,7 +111,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         }
 
     @ma.post_load
-    def _make_object(self, data):
+    def _make_object(self, data, **kwargs):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
