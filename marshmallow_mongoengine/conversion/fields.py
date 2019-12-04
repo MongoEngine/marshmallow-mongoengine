@@ -45,7 +45,7 @@ class MetaFieldBuilder(object):
 
 
 class ListBuilder(MetaFieldBuilder):
-    AVAILABLE_PARAMS = (params.LenghtParam,)
+    AVAILABLE_PARAMS = (params.LengthParam,)
     MARSHMALLOW_FIELD_CLS = ma_fields.List
 
     def _get_marshmallow_field_cls(self):
@@ -165,7 +165,7 @@ register_field(me.fields.DecimalField, ma_fields.Decimal,
 register_field(me.fields.DictField, ma_fields.Raw)
 register_field(me.fields.DynamicField, ma_fields.Raw)
 register_field(me.fields.EmailField, ma_fields.Email,
-               available_params=(params.LenghtParam,))
+               available_params=(params.LengthParam,))
 register_field(me.fields.FloatField, ma_fields.Float,
                available_params=(params.SizeParam,))
 register_field(me.fields.GenericEmbeddedDocumentField,
@@ -190,9 +190,9 @@ register_field(me.fields.PointField, ma_fields.Point)
 register_field(me.fields.SequenceField, ma_fields.Integer,
                available_params=(params.SizeParam,))  # TODO: handle value_decorator
 register_field(me.fields.StringField, ma_fields.String,
-               available_params=(params.LenghtParam, params.RegexParam))
+               available_params=(params.LengthParam, params.RegexParam))
 register_field(me.fields.URLField, ma_fields.URL,
-               available_params=(params.LenghtParam,))
+               available_params=(params.LengthParam,))
 register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
 register_field_builder(me.fields.ListField, ListBuilder)
 register_field_builder(me.fields.MapField, MapBuilder)
