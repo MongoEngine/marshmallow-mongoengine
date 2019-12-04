@@ -9,6 +9,8 @@ import mongoengine as me
 
 import pytest
 from marshmallow_mongoengine import ModelSchema
+from marshmallow.exceptions import ValidationError
+
 
 
 TEST_DB = 'marshmallow_mongoengine-test'
@@ -31,19 +33,15 @@ class TestParams(BaseTest):
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
-        try:
+        with pytest.raises(ValidationError) as excinfo:
             doc = DocSchema().load({'field_not_required': 'bad_doc'})
-        except ValidationError as err:
-            assert err.messages == {'field_required': ['Missing data for required field.']}
-
+        assert excinfo.value.args[0] == {'field_required': ['Missing data for required field.']}
         # Now provide the required field
         doc = DocSchema().load({'field_required': 'good_doc'})
-        assert doc
         assert doc.field_not_required is None
         assert doc.field_required == 'good_doc'
         # Update should not take care of the required fields
         doc = DocSchema().update(doc, {'field_not_required': 'good_doc'})
-        assert doc
         assert doc.field_required == 'good_doc'
         assert doc.field_not_required == 'good_doc'
 
@@ -55,7 +53,6 @@ class TestParams(BaseTest):
             class Meta:
                 model = Doc
         doc = DocSchema().load({})
-        assert doc
         assert doc.basic == 42
         assert doc.cunning is False
 
@@ -72,12 +69,10 @@ class TestParams(BaseTest):
         # Make sure default doesn't shadow given values
         doc = DocSchema().load({'field_with_default': 'custom_value',
                                 'field_required_with_default': 'custom_value'})
-        assert doc
         assert doc.field_with_default == 'custom_value'
         assert doc.field_required_with_default == 'custom_value'
         # Now use defaults
         doc = DocSchema().load({})
-        assert doc
         assert doc.field_with_default == 'default_value'
         assert doc.field_required_with_default == 'default_generated_value'
 
@@ -92,15 +87,12 @@ class TestParams(BaseTest):
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
-        try:
-            doc = DocSchema().load({'basic': 0})
-        except ValidationError as err:
-            err.messages == {'basic': 0}
+        doc = DocSchema().load({'basic': 0})
+        assert doc.basic == 0
 
-        try:
+        with pytest.raises(ValidationError) as excinfo:
             doc = DocSchema().load({'basic': 3})
-        except ValidationError as err:
-            err.messages == {'basic': ['Not a valid choice.']}
+        assert excinfo.value.args[0] == {'basic': ['Must be one of: 0, 1.']}
 
     def test_regex(self):
         class Doc(me.Document):
@@ -111,10 +103,8 @@ class TestParams(BaseTest):
                 model = Doc
 
         doc = DocSchema().load({'basic': '112233'})
-        assert doc
         assert doc.basic == '112233'
 
-        try:
+        with pytest.raises(ValidationError) as excinfo:
             doc = DocSchema().load({'basic': '1A2B3CDD'})
-        except ValidationError as err:
-            err.messages == {'basic': ['String does not match expected pattern.']}
+        assert excinfo.value.args[0] == {'basic': ['String does not match expected pattern.']}

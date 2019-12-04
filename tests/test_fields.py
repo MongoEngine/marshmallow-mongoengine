@@ -44,12 +44,11 @@ class TestFields(BaseTest):
         doc = File(name='test_file')
         data = b'1234567890' * 10
         doc.file.put(data, content_type='application/octet-stream')
-        dumped_data = FileSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'name': 'test_file'}
+        dump_data = FileSchema().dump(doc)
+        assert dump_data == {'name': 'test_file'}
         # Should not be able to load the file
-        loaded_data = FileSchema().load({'name': 'bad_load', 'file': b'12345'})
-        assert not loaded_data.file
+        load_data = FileSchema().load({'name': 'bad_load', 'file': b'12345'})
+        assert not load_data.file
 
     def test_ListField(self):
         class Doc(me.Document):
@@ -61,12 +60,10 @@ class TestFields(BaseTest):
                 model = Doc
         list_ = ['A', 'B', 'C']
         doc = Doc(list=list_)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'list': list_}
-        loaded_data = DocSchema().load(dumped_data)
-        assert loaded_data
-        assert loaded_data.list == list_
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'list': list_}
+        load_data = DocSchema().load(dump_data)
+        assert load_data.list == list_
 
     def test_ListSpecialField(self):
         class NestedDoc(me.EmbeddedDocument):
@@ -75,19 +72,17 @@ class TestFields(BaseTest):
             list = me.ListField(me.EmbeddedDocumentField(NestedDoc))
         fields_ = fields_for_model(Doc)
         assert type(fields_['list']) is fields.List
-        assert type(fields_['list'].container) is fields.Nested
+        assert type(fields_['list'].inner) is fields.Nested
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
         list_ = [{'field': 'A'}, {'field': 'B'}, {'field': 'C'}]
         doc = Doc(list=list_)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'list': list_}
-        loaded_data = DocSchema().load(dumped_data)
-        assert loaded_data
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'list': list_}
+        load_data = DocSchema().load(dump_data)
         for i, elem in enumerate(list_):
-            assert loaded_data.list[i].field == elem['field']
+            assert load_data.list[i].field == elem['field']
 
     def test_DictField(self):
         class Doc(me.Document):
@@ -106,12 +101,10 @@ class TestFields(BaseTest):
             'list_3': ['a', 'b', 'c']
         }
         doc = Doc(data=data)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'data': data}
-        loaded_data = DocSchema().load(dumped_data)
-        assert loaded_data
-        assert loaded_data.data == data
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'data': data}
+        load_doc = DocSchema().load(dump_data)
+        assert load_doc._data == doc._data
 
     def test_DynamicField(self):
         class Doc(me.Document):
@@ -130,12 +123,10 @@ class TestFields(BaseTest):
             'list_3': ['a', 'b', 'c']
         }
         doc = Doc(dynamic=data)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'dynamic': data}
-        loaded_data = DocSchema().load(dumped_data)
-        assert loaded_data
-        assert loaded_data.dynamic == data
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'dynamic': data}
+        load_data = DocSchema().load(dump_data)
+        assert load_data.dynamic == data
 
     def test_GenericReferenceField(self):
         class Doc(me.Document):
@@ -154,14 +145,12 @@ class TestFields(BaseTest):
         sub_doc_a = SubDocA().save()
         sub_doc_b = SubDocB().save()
         doc = Doc(generic=sub_doc_a)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'generic': 'doc_a_pk', 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'generic': 'doc_a_pk', 'id': 'main'}
         doc.generic = sub_doc_b
         doc.save()
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'generic': 42, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'generic': 42, 'id': 'main'}
         # Test load
         for bad_generic in (
                 {'id': str(sub_doc_a.id)}, {'_cls': sub_doc_a._class_name},
@@ -173,20 +162,15 @@ class TestFields(BaseTest):
                 {'id': None, '_cls': sub_doc_a._class_name},
                 {'id': str(sub_doc_a.id), '_cls': None},
             ):
-            try:
-                loaded_data = DocSchema().load({"generic": bad_generic})
-            except ValidationError as err:
-                loaded_data = None
-            assert not loaded_data
-
-        loaded_data = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
+            with pytest.raises(ValidationError) as excinfo:
+                load = DocSchema().load({"generic": bad_generic})
+            assert 'generic' in excinfo.value.args[0]
+        load_data = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
                                              "_cls": sub_doc_a._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_a
-        loaded_data = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
+        assert load_data['generic'] == sub_doc_a
+        load_data = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
                                              "_cls": sub_doc_b._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_b
+        assert load_data['generic'] == sub_doc_b
         # Teste choices param
         class DocOnlyA(me.Document):
             id = me.StringField(primary_key=True, default='main')
@@ -194,18 +178,14 @@ class TestFields(BaseTest):
         class DocOnlyASchema(ModelSchema):
             class Meta:
                 model = DocOnlyA
-        loaded_data = DocOnlyASchema().load({})
-        assert loaded_data
-        loaded_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
+        load_data = DocOnlyASchema().load({})
+        load_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
                                                   "_cls": sub_doc_a._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_a
-        try:
-            loaded_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
-                                                      "_cls": sub_doc_b._class_name}})
-        except ValidationError as err:
-            loaded_data = None
-        assert not loaded_data
+        assert load_data['generic'] == sub_doc_a
+        with pytest.raises(ValidationError) as excinfo:
+            load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
+                                                  "_cls": sub_doc_b._class_name}})
+        assert 'generic' in excinfo.value.args[0]
 
     @pytest.mark.skipif(
         not hasattr(me, 'GenericLazyReferenceField'),
@@ -227,14 +207,12 @@ class TestFields(BaseTest):
         sub_doc_a = SubDocA().save()
         sub_doc_b = SubDocB().save()
         doc = Doc(generic=sub_doc_a)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'generic': 'doc_a_pk', 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'generic': 'doc_a_pk', 'id': 'main'}
         doc.generic = sub_doc_b
         doc.save()
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'generic': 42, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'generic': 42, 'id': 'main'}
         # Test load
         for bad_generic in (
                 {'id': str(sub_doc_a.id)}, {'_cls': sub_doc_a._class_name},
@@ -246,20 +224,15 @@ class TestFields(BaseTest):
                 {'id': None, '_cls': sub_doc_a._class_name},
                 {'id': str(sub_doc_a.id), '_cls': None},
             ):
-            try:
-                loaded_data = DocSchema().load({"generic": bad_generic})
-            except ValidationError as err:
-                loaded_data = None
-            assert not loaded_data
-
-        loaded_data = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
+            with pytest.raises(ValidationError) as excinfo:
+                load = DocSchema().load({"generic": bad_generic})
+            assert 'generic' in excinfo.value.args[0]
+        load_data = DocSchema().load({"generic": {"id": str(sub_doc_a.id),
                                              "_cls": sub_doc_a._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_a
-        loaded_data = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
+        assert load_data['generic'] == sub_doc_a
+        load_data = DocSchema().load({"generic": {"id": str(sub_doc_b.id),
                                              "_cls": sub_doc_b._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_b
+        assert load_data['generic'] == sub_doc_b
         # Teste choices param
         class DocOnlyA(me.Document):
             id = me.StringField(primary_key=True, default='main')
@@ -267,18 +240,14 @@ class TestFields(BaseTest):
         class DocOnlyASchema(ModelSchema):
             class Meta:
                 model = DocOnlyA
-        loaded_data = DocOnlyASchema().load({})
-        assert loaded_data
-        loaded_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
+        load_data = DocOnlyASchema().load({})
+        load_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
                                                   "_cls": sub_doc_a._class_name}})
-        assert loaded_data
-        assert loaded_data['generic'] == sub_doc_a
-        try:
-            loaded_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
-                                                      "_cls": sub_doc_b._class_name}})
-        except ValidationError as err:
-            loaded_data = None
-        assert not loaded_data
+        assert load_data['generic'] == sub_doc_a
+        with pytest.raises(ValidationError) as excinfo:
+            load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
+                                                  "_cls": sub_doc_b._class_name}})
+        assert 'generic' in excinfo.value.args[0]
 
     def test_GenericEmbeddedDocumentField(self):
         class Doc(me.Document):
@@ -294,14 +263,12 @@ class TestFields(BaseTest):
             class Meta:
                 model = Doc
         doc = Doc(embedded=EmbeddedA())
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'embedded': {'field_a': 'field_a_value'}, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'embedded': {'field_a': 'field_a_value'}, 'id': 'main'}
         doc.embedded = EmbeddedB()
         doc.save()
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'embedded': {'field_b': 42}, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'embedded': {'field_b': 42}, 'id': 'main'}
         # TODO: test load ?
 
     def test_MapField(self):
@@ -318,16 +285,12 @@ class TestFields(BaseTest):
                 model = Doc
         doc = Doc(map={'a': MappedDoc(field='A'), 'b': MappedDoc(field='B')},
                   str={'a': 'aaa', 'b': 'bbbb'}).save()
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {
-            'map': {'a': {'field': 'A'}, 'b': {'field': 'B'}},
-            'str': {'a': 'aaa', 'b': 'bbbb'}, 'id': 1
-        }
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'map': {'a': {'field': 'A'}, 'b': {'field': 'B'}},
+                             'str': {'a': 'aaa', 'b': 'bbbb'}, 'id': 1}
         # Try the load
-        loaded_data = DocSchema().load(dumped_data)
-        assert loaded_data
-        assert loaded_data.map == doc.map
+        load_data = DocSchema().load(dump_data)
+        assert load_data.map == doc.map
 
     def test_ReferenceField(self):
         class ReferenceDoc(me.Document):
@@ -342,28 +305,27 @@ class TestFields(BaseTest):
                 model = Doc
         ref_doc = ReferenceDoc().save()
         doc = Doc(ref=ref_doc)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'ref': 42, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'ref': 42, 'id': 'main'}
         # Try the same with reference document type passed as string
         class DocSchemaRefAsString(Schema):
             id = fields.String()
             ref = fields.Reference('ReferenceDoc')
-        dumped_data = DocSchemaRefAsString().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'ref': 42, 'id': 'main'}
+        dump_data = DocSchemaRefAsString().dump(doc)
+        assert dump_data == {'ref': 42, 'id': 'main'}
         # Test the field loading
-        loaded_data = DocSchemaRefAsString().load(dumped_data)
-        assert loaded_data
-        assert isinstance(loaded_data['ref'], ReferenceDoc)
+        load_data = DocSchemaRefAsString().load(dump_data)
+        assert type(load_data['ref']) == ReferenceDoc
         # Try invalid loads
-        for bad_ref in (1, 'NaN', None):
-            try:
-                dumped_data['ref'] = bad_ref
-                loaded_data = DocSchemaRefAsString().load(dumped_data)
-            except ValidationError as err:
-                loaded_data = None
-            assert loaded_data is None
+        for bad_ref, error_msg in (
+                (1, ['unknown document ReferenceDoc `1`']),
+                ('NaN', ['unknown document ReferenceDoc `NaN`']),
+                (None, ['Field may not be null.']),
+        ):
+            dump_data['ref'] = bad_ref
+            with pytest.raises(ValidationError) as excinfo:
+                _ = DocSchemaRefAsString().load(dump_data)
+            assert excinfo.value.args[0] == {'ref': error_msg}
 
     @pytest.mark.skipif(
         not hasattr(me, 'LazyReferenceField'),
@@ -381,34 +343,32 @@ class TestFields(BaseTest):
                 model = Doc
         ref_doc = ReferenceDoc().save()
         doc = Doc(ref=ref_doc)
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'ref': 42, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'ref': 42, 'id': 'main'}
         # Force ref field to be LazyReference
         doc.save()
         doc.reload()
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'ref': 42, 'id': 'main'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'ref': 42, 'id': 'main'}
         # Try the same with reference document type passed as string
         class DocSchemaRefAsString(Schema):
             id = fields.String()
             ref = fields.Reference('ReferenceDoc')
-        dumped_data = DocSchemaRefAsString().dump(doc)
-        assert dumped_data
-        assert dumped_data == {'ref': 42, 'id': 'main'}
+        dump_data = DocSchemaRefAsString().dump(doc)
+        assert dump_data == {'ref': 42, 'id': 'main'}
         # Test the field loading
-        loaded_data = DocSchemaRefAsString().load(dumped_data)
-        assert loaded_data
-        assert isinstance(loaded_data['ref'], ReferenceDoc)
+        load_data = DocSchemaRefAsString().load(dump_data)
+        assert type(load_data['ref']) == ReferenceDoc
         # Try invalid loads
-        for bad_ref in (1, 'NaN', None):
-            try:
-                dumped_data['ref'] = bad_ref
-                loaded_data = DocSchemaRefAsString().load(dumped_data)
-            except ValidationError as err:
-                loaded_data = None
-            assert loaded_data is None
+        for bad_ref, error_msg in (
+                (1, ['unknown document ReferenceDoc `1`']),
+                ('NaN', ['unknown document ReferenceDoc `NaN`']),
+                (None, ['Field may not be null.']),
+        ):
+            dump_data['ref'] = bad_ref
+            with pytest.raises(ValidationError) as excinfo:
+                _ = DocSchemaRefAsString().load(dump_data)
+            assert excinfo.value.args[0] == {'ref': error_msg}
 
     def test_PointField(self):
         class Doc(me.Document):
@@ -417,21 +377,20 @@ class TestFields(BaseTest):
             class Meta:
                 model = Doc
         doc = Doc(point={ 'type': 'Point', 'coordinates': [10, 20] })
-        dumped_data = DocSchema().dump(doc)
-        assert dumped_data
-        assert dumped_data['point'] == { 'x': 10, 'y': 20 }
-        load = DocSchema().load(dumped_data)
-        assert load
-        assert load.point == { 'type': 'Point', 'coordinates': [10, 20] }
+        dump_data = DocSchema().dump(doc)
+        assert dump_data['point'] == { 'x': 10, 'y': 20 }
+        load_data = DocSchema().load(dump_data)
+        assert load_data.point == { 'type': 'Point', 'coordinates': [10, 20] }
         # Deserialize Point with coordinates passed as string
         data = {'point': { 'x': '10', 'y': '20' }}
-        loaded_data = DocSchema().load(data)
-        assert loaded_data
-        assert loaded_data.point == { 'type': 'Point', 'coordinates': [10, 20] }
+        load_data = DocSchema().load(data)
+        assert load_data.point == { 'type': 'Point', 'coordinates': [10, 20] }
         # Try to load invalid coordinates
         data = {'point': { 'x': '10', 'y': '20foo' }}
-        load = DocSchema().load(data)
-        assert 'point' in load.errors
+
+        with pytest.raises(ValidationError) as excinfo:
+            load_data = DocSchema().load(data)
+        assert 'point' in excinfo.value.args[0]
 
     def test_LineStringField(self):
         class Doc(me.Document):

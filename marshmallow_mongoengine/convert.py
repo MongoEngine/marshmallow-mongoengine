@@ -3,10 +3,7 @@ from marshmallow_mongoengine.conversion import fields
 
 
 def _is_field(value):
-    return (
-        isinstance(value, type) and
-        issubclass(value, fields.Field)
-    )
+    return isinstance(value, type) and issubclass(value, fields.Field)
 
 
 class ModelConverter(object):

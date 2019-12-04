@@ -11,13 +11,13 @@ from marshmallow.fields import *  # noqa
 # ...and add custom ones for mongoengine
 class ObjectId(fields.Field):
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         try:
             return bson.ObjectId(value)
         except Exception:
             raise ValidationError('invalid ObjectId `%s`' % value)
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         if value is None:
             return missing
         return str(value)
@@ -25,7 +25,7 @@ class ObjectId(fields.Field):
 
 class Point(fields.Field):
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         try:
             return dict(
                 type='Point',
@@ -34,7 +34,7 @@ class Point(fields.Field):
         except Exception:
             raise ValidationError('invalid Point `%s`' % value)
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         if value is None:
             return missing
         return dict(
@@ -86,7 +86,7 @@ class Reference(fields.Field):
             self.document_type_obj = get_document(self.document_type_obj)
         return self.document_type_obj
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         document_type = self.document_type
         try:
             return document_type.objects.get(pk=value)
@@ -95,7 +95,7 @@ class Reference(fields.Field):
                                   (document_type._class_name, value))
         return value
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         # Only return the pk of the document for serialization
         if value is None:
             return missing
@@ -125,7 +125,7 @@ class GenericReference(fields.Field):
                     self.document_class_choices.append(choice)
         super(GenericReference, self).__init__(*args, **kwargs)
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         # To deserialize a generic reference, we need a _cls field in addition
         # with the id field
         if not isinstance(value, dict) or not value.get('id') or not value.get('_cls'):
@@ -146,7 +146,7 @@ class GenericReference(fields.Field):
                                   (doc_cls_name, value))
         return doc
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         # Only return the pk of the document for serialization
         if value is None:
             return missing
@@ -159,12 +159,12 @@ class GenericEmbeddedDocument(fields.Field):
     Dynamic embedded document
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         # Cannot deserialize given we have no way knowing wich kind of
         # document is given...
         return missing
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         # Create the schema at serialize time to be dynamic
         from marshmallow_mongoengine.schema import ModelSchema
 
@@ -172,8 +172,8 @@ class GenericEmbeddedDocument(fields.Field):
 
             class Meta:
                 model = type(value)
-        data = NestedSchema().dump(value)
-        return data
+
+        return NestedSchema().dump(value)
 
 
 class Map(fields.Field):
@@ -191,17 +191,16 @@ class Map(fields.Field):
         func = getattr(self.schema, action)
         total = {}
         for k, v in value.items():
-            data = func(v)
-            total[k] = data
+            total[k] = func(v)
         return total
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         if self.schema:
             return self._schema_process('dump', value)
         else:
             return value
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         if self.schema:
             return self._schema_process('load', value)
         else:
@@ -214,8 +213,8 @@ class Skip(fields.Field):
     Marshmallow custom field that just ignore the current field
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         return missing
 
-    def _serialize(self, value, attr, obj):
+    def _serialize(self, value, attr, obj, **kwargs):
         return missing

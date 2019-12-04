@@ -35,9 +35,8 @@ class TestSkip(BaseTest):
             class Meta:
                 model = Doc
         doc = Doc()
-        data = DocSchema().dump(doc)
-        assert data
-        assert data == {'field_not_empty': 'value'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'field_not_empty': 'value'}
 
     def test_disable_skip_none_field(self):
         class Doc(me.Document):
@@ -48,5 +47,5 @@ class TestSkip(BaseTest):
                 model = Doc
                 model_skip_values = ()
         doc = Doc()
-        data = DocSchema().dump(doc)
-        assert data == {'field_empty': None, 'list_empty': []}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'field_empty': None, 'list_empty': []}

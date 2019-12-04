@@ -3,7 +3,7 @@ import copy
 
 from mongoengine.base import BaseDocument
 import marshmallow as ma
-from marshmallow.compat import with_metaclass
+from six import with_metaclass
 from marshmallow_mongoengine.convert import ModelConverter
 
 
@@ -103,7 +103,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
-    def _remove_skip_values(self, data):
+    def _remove_skip_values(self, data, many, **kwargs):
         to_skip = self.opts.model_skip_values
         return {
             key: value for key, value in data.items()
@@ -111,7 +111,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         }
 
     @ma.post_load
-    def _make_object(self, data):
+    def _make_object(self, data, many, **kwargs):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
@@ -150,11 +150,10 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         loaded_data = self._do_load(data, postprocess=False)
         for field in required_fields:
             self.fields[field].required = True
-        if loaded_data:
-            # Update the given obj fields
-            for k, v in loaded_data.items():
-                # Skip default values that have been automatically
-                # added during unserialization
-                if k in data:
-                    setattr(obj, k, v)
+        # Update the given obj fields
+        for k, v in loaded_data.items():
+            # Skip default values that have been automatically
+            # added during unserialization
+            if k in data:
+                setattr(obj, k, v)
         return obj
