@@ -42,6 +42,33 @@ class Point(fields.Field):
         )
 
 
+class LineString(fields.Field):
+
+    """
+    Marshmallow custom field to map with :class Mongoengine.LineStringField:
+    """
+
+    def _deserialize(self, value, attr, data):
+        try:
+            coordinates = []
+
+            for x, y in value['coordinates']:
+                coordinates.append([float(x), float(y)])
+            return dict(
+                type='LineString',
+                coordinates=coordinates
+            )
+        except Exception:
+            raise ValidationError('invalid value data `%s`' % value)
+
+    def _serialize(self, value, attr, obj):
+            if value is None:
+                return missing
+            return dict(
+                coordinates=value['coordinates']
+            )
+
+
 class Reference(fields.Field):
 
     """
