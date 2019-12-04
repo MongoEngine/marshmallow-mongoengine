@@ -14,7 +14,7 @@ class ObjectId(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         try:
             return bson.ObjectId(value)
-        except BSONError as e:
+        except BSONError:
             raise ValidationError('invalid ObjectId `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -31,7 +31,7 @@ class Point(fields.Field):
                 type='Point',
                 coordinates=[float(value['x']), float(value['y'])]
             )
-        except BSONError as e:
+        except BSONError:
             raise ValidationError('invalid Point `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -63,11 +63,11 @@ class LineString(fields.Field):
             raise ValidationError('invalid value data `%s`' % value)
 
     def _serialize(self, value, attr, obj):
-            if value is None:
-                return missing
-            return dict(
-                coordinates=value['coordinates']
-            )
+        if value is None:
+            return missing
+        return dict(
+            coordinates=value['coordinates']
+        )
 
 
 class Reference(fields.Field):
