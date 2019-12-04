@@ -88,7 +88,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
         return declared_fields
 
 
-class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
+class ModelSchema(six.with_metaclass(SchemaMeta, ma.Schema)):
     """Base class for Mongoengine model-based Schemas.
 
     Example: ::
@@ -103,7 +103,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
-    def _remove_skip_values(self, data, many, **kwargs):
+    def _remove_skip_values(self, data, **kwargs):
         to_skip = self.opts.model_skip_values
         return {
             key: value for key, value in data.items()
@@ -111,7 +111,7 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         }
 
     @ma.post_load
-    def _make_object(self, data, many, **kwargs):
+    def _make_object(self, data, **kwargs):
         if self.opts.model_build_obj and self.opts.model:
             return self.opts.model(**data)
         else:
@@ -147,6 +147,10 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
         required_fields = [k for k, f in self.fields.items() if f.required]
         for field in required_fields:
             self.fields[field].required = False
+<<<<<<< HEAD
+=======
+
+>>>>>>> EugenePY/master
         loaded_data = self._do_load(data, postprocess=False)
         for field in required_fields:
             self.fields[field].required = True

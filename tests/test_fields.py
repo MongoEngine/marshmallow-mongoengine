@@ -10,6 +10,7 @@ from marshmallow import validate, Schema
 from marshmallow.exceptions import ValidationError
 
 import pytest
+from . import exception_test
 from marshmallow_mongoengine import (fields, fields_for_model, ModelSchema,
                                      ModelConverter, convert_field, field_for)
 
@@ -32,29 +33,34 @@ def contains_validator(field, v_type):
     return False
 
 
+
 class TestFields(BaseTest):
 
+    @exception_test
     def test_FileField(self):
         class File(me.Document):
             name = me.StringField(primary_key=True)
             file = me.FileField()
+
         class FileSchema(ModelSchema):
             class Meta:
                 model = File
         doc = File(name='test_file')
         data = b'1234567890' * 10
         doc.file.put(data, content_type='application/octet-stream')
-        dump_data = FileSchema().dump(doc)
-        assert dump_data == {'name': 'test_file'}
+        dump = FileSchema().dump(doc)
+        assert dump == {'name': 'test_file'}
         # Should not be able to load the file
-        load_data = FileSchema().load({'name': 'bad_load', 'file': b'12345'})
-        assert not load_data.file
+        load = FileSchema().load({'name': 'bad_load', 'file': b'12345'})
+        assert not load.file
 
+    @exception_test
     def test_ListField(self):
         class Doc(me.Document):
             list = me.ListField(me.StringField())
         fields_ = fields_for_model(Doc)
         assert type(fields_['list']) is fields.List
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -65,9 +71,11 @@ class TestFields(BaseTest):
         load_data = DocSchema().load(dump_data)
         assert load_data.list == list_
 
+    @exception_test
     def test_ListSpecialField(self):
         class NestedDoc(me.EmbeddedDocument):
             field = me.StringField()
+
         class Doc(me.Document):
             list = me.ListField(me.EmbeddedDocumentField(NestedDoc))
         fields_ = fields_for_model(Doc)
@@ -84,11 +92,13 @@ class TestFields(BaseTest):
         for i, elem in enumerate(list_):
             assert load_data.list[i].field == elem['field']
 
+    @exception_test
     def test_DictField(self):
         class Doc(me.Document):
             data = me.DictField()
         fields_ = fields_for_model(Doc)
         assert type(fields_['data']) is fields.Raw
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -111,6 +121,7 @@ class TestFields(BaseTest):
             dynamic = me.DynamicField()
         fields_ = fields_for_model(Doc)
         assert type(fields_['dynamic']) is fields.Raw
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -132,12 +143,15 @@ class TestFields(BaseTest):
         class Doc(me.Document):
             id = me.StringField(primary_key=True, default='main')
             generic = me.GenericReferenceField()
+
         class SubDocA(me.Document):
             field_a = me.StringField(primary_key=True, default='doc_a_pk')
+
         class SubDocB(me.Document):
             field_b = me.IntField(primary_key=True, default=42)
         fields_ = fields_for_model(Doc)
         assert type(fields_['generic']) is fields.GenericReference
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -172,9 +186,11 @@ class TestFields(BaseTest):
                                              "_cls": sub_doc_b._class_name}})
         assert load_data['generic'] == sub_doc_b
         # Teste choices param
+
         class DocOnlyA(me.Document):
             id = me.StringField(primary_key=True, default='main')
             generic = me.GenericReferenceField(choices=[SubDocA])
+
         class DocOnlyASchema(ModelSchema):
             class Meta:
                 model = DocOnlyA
@@ -249,16 +265,27 @@ class TestFields(BaseTest):
                                                   "_cls": sub_doc_b._class_name}})
         assert 'generic' in excinfo.value.args[0]
 
+        assert load['generic'] == sub_doc_a
+        try:
+            load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
+                                          "_cls": sub_doc_b._class_name}})
+        except Exception as e:
+            assert 'generic' in e.messages
+
+    @exception_test
     def test_GenericEmbeddedDocumentField(self):
         class Doc(me.Document):
             id = me.StringField(primary_key=True, default='main')
             embedded = me.GenericEmbeddedDocumentField()
+
         class EmbeddedA(me.EmbeddedDocument):
             field_a = me.StringField(default='field_a_value')
+
         class EmbeddedB(me.EmbeddedDocument):
             field_b = me.IntField(default=42)
         fields_ = fields_for_model(Doc)
         assert type(fields_['embedded']) is fields.GenericEmbeddedDocument
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -271,15 +298,18 @@ class TestFields(BaseTest):
         assert dump_data == {'embedded': {'field_b': 42}, 'id': 'main'}
         # TODO: test load ?
 
+    @exception_test
     def test_MapField(self):
         class MappedDoc(me.EmbeddedDocument):
             field = me.StringField()
+
         class Doc(me.Document):
             id = me.IntField(primary_key=True, default=1)
             map = me.MapField(me.EmbeddedDocumentField(MappedDoc))
             str = me.MapField(me.StringField())
         fields_ = fields_for_model(Doc)
         assert type(fields_['map']) is fields.Map
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -292,14 +322,17 @@ class TestFields(BaseTest):
         load_data = DocSchema().load(dump_data)
         assert load_data.map == doc.map
 
+    @exception_test
     def test_ReferenceField(self):
         class ReferenceDoc(me.Document):
             field = me.IntField(primary_key=True, default=42)
+
         class Doc(me.Document):
             id = me.StringField(primary_key=True, default='main')
             ref = me.ReferenceField(ReferenceDoc)
         fields_ = fields_for_model(Doc)
         assert type(fields_['ref']) is fields.Reference
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -308,6 +341,7 @@ class TestFields(BaseTest):
         dump_data = DocSchema().dump(doc)
         assert dump_data == {'ref': 42, 'id': 'main'}
         # Try the same with reference document type passed as string
+
         class DocSchemaRefAsString(Schema):
             id = fields.String()
             ref = fields.Reference('ReferenceDoc')
@@ -370,9 +404,11 @@ class TestFields(BaseTest):
                 _ = DocSchemaRefAsString().load(dump_data)
             assert excinfo.value.args[0] == {'ref': error_msg}
 
+    @exception_test
     def test_PointField(self):
         class Doc(me.Document):
             point = me.PointField()
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc

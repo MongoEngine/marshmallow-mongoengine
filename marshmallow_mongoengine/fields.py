@@ -1,5 +1,6 @@
 import bson
 import uuid
+from bson.errors import BSONError
 from marshmallow import ValidationError, fields, missing
 from mongoengine import ValidationError as MongoValidationError, NotRegistered
 from mongoengine.base import get_document
@@ -8,13 +9,12 @@ from mongoengine.base import get_document
 from marshmallow.fields import *  # noqa
 
 
-# ...and add custom ones for mongoengine
 class ObjectId(fields.Field):
 
     def _deserialize(self, value, attr, data, **kwargs):
         try:
             return bson.ObjectId(value)
-        except Exception:
+        except BSONError as e:
             raise ValidationError('invalid ObjectId `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -31,7 +31,7 @@ class Point(fields.Field):
                 type='Point',
                 coordinates=[float(value['x']), float(value['y'])]
             )
-        except Exception:
+        except BSONError as e:
             raise ValidationError('invalid Point `%s`' % value)
 
     def _serialize(self, value, attr, obj, **kwargs):

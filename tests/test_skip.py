@@ -31,6 +31,7 @@ class TestSkip(BaseTest):
             field_not_empty = me.StringField(default='value')
             field_empty = me.StringField()
             list_empty = me.ListField(me.StringField())
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
@@ -42,6 +43,7 @@ class TestSkip(BaseTest):
         class Doc(me.Document):
             field_empty = me.StringField()
             list_empty = me.ListField(me.StringField())
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc

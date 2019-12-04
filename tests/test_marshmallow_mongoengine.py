@@ -9,7 +9,7 @@ import mongoengine as me
 
 from marshmallow import validate
 from marshmallow.exceptions import ValidationError
-
+from . import exception_test
 import pytest
 from marshmallow_mongoengine import (fields, fields_for_model, ModelSchema,
                                      ModelConverter, convert_field, field_for)
@@ -70,7 +70,7 @@ def models():
         date_created = me.DateTimeField(default=dt.datetime.utcnow,
                                         help_text='date the student was created')
         current_school = me.ReferenceField('School')
-        courses = me.ListField(me.ReferenceField('Course'))
+        courses = me.ListField(me.ReferenceField(Course))
         email = me.EmailField(max_length=100)
         profile_uri = me.URLField(max_length=200)
 
@@ -246,11 +246,11 @@ class TestModelSchema(BaseTest):
 
     def test_model_schema_dumping(self, schemas, student):
         schema = schemas.StudentSchema()
-        result_data = schema.dump(student)
+        result = schema.dump(student)
         for field in ('id', 'full_name', 'age'):
-            result_data.get(field, '<not_set>') == getattr(student, field)
+            result.get(field, '<not_set>') == getattr(student, field)
         # related field dumps to pk
-        assert result_data['current_school'] == str(student.current_school.pk)
+        assert result['current_school'] == str(student.current_school.pk)
 
     def test_model_schema_bad_loading(self, models, schemas, school):
         schema = schemas.StudentSchema()
@@ -357,6 +357,7 @@ class TestModelSchema(BaseTest):
         assert 'profile_uri' in dump_data
         assert 'date_created' not in dump_data
 
+    @exception_test
     def test_additional_option(self, student, models):
         class StudentSchema(ModelSchema):
             uppername = fields.Function(lambda x: x.full_name.upper())
@@ -370,6 +371,7 @@ class TestModelSchema(BaseTest):
         assert 'uppername' in dump_data
         assert dump_data['uppername'] == student.full_name.upper()
 
+    @exception_test
     def test_field_override(self, student, models):
         class MyString(fields.Str):
 
@@ -386,6 +388,7 @@ class TestModelSchema(BaseTest):
         assert 'full_name' in dump_data
         assert dump_data['full_name'] == student.full_name.upper()
 
+    @exception_test
     def test_class_inheritance(self, student, models, schemas):
         class CustomStudentSchema(schemas.StudentSchema):
             age = fields.Function(lambda v: 'custom-' + str(v.age))
@@ -417,6 +420,7 @@ class TestModelSchema(BaseTest):
                 class Meta:
                     model = DummyClass
 
+    @exception_test
     def test_model_schema_custom_skip_values(self, models, schemas):
         student = models.Student(
             full_name='Kevin Smith',
