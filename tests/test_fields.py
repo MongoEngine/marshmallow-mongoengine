@@ -260,17 +260,6 @@ class TestFields(BaseTest):
         load_data = DocOnlyASchema().load({"generic": {"id": str(sub_doc_a.id),
                                                   "_cls": sub_doc_a._class_name}})
         assert load_data['generic'] == sub_doc_a
-        with pytest.raises(ValidationError) as excinfo:
-            load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
-                                                  "_cls": sub_doc_b._class_name}})
-        assert 'generic' in excinfo.value.args[0]
-
-        assert load['generic'] == sub_doc_a
-        try:
-            load = DocOnlyASchema().load({"generic": {"id": str(sub_doc_b.id),
-                                          "_cls": sub_doc_b._class_name}})
-        except Exception as e:
-            assert 'generic' in e.messages
 
     @exception_test
     def test_GenericEmbeddedDocumentField(self):
@@ -436,17 +425,15 @@ class TestFields(BaseTest):
                 model = Doc
         doc = Doc(line={'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]})
         dump = DocSchema().dump(doc)
-        assert not dump.errors
-        assert dump.data['line']['coordinates'] == [[10, 20], [30, 40]]
-        load = DocSchema().load(dump.data)
-        assert not load.errors
-        assert load.data.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
+        assert dump['line']['coordinates'] == [[10, 20], [30, 40]]
+        load = DocSchema().load(dump)
+        assert load.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
         # Deserialize LineString with coordinates passed as strings
         data = {'line': {'coordinates': [['10', '20'], ['30', '40']]}}
         load = DocSchema().load(data)
-        assert not load.errors
-        assert load.data.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
+        assert load.line == {'type': 'LineString', 'coordinates': [[10, 20], [30, 40]]}
         # Try to load invalid coordinates
         data = {'line': {'coordinates': [['10', '20foo']]}}
-        load = DocSchema().load(data)
-        assert 'line' in load.errors
+        with pytest.raises(ValidationError) as excinfo:
+            load = DocSchema().load(data)
+        assert 'line' in excinfo.value.args[0]

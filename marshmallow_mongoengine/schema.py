@@ -88,7 +88,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
         return declared_fields
 
 
-class ModelSchema(six.with_metaclass(SchemaMeta, ma.Schema)):
+class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
     """Base class for Mongoengine model-based Schemas.
 
     Example: ::
@@ -147,10 +147,6 @@ class ModelSchema(six.with_metaclass(SchemaMeta, ma.Schema)):
         required_fields = [k for k, f in self.fields.items() if f.required]
         for field in required_fields:
             self.fields[field].required = False
-<<<<<<< HEAD
-=======
-
->>>>>>> EugenePY/master
         loaded_data = self._do_load(data, postprocess=False)
         for field in required_fields:
             self.fields[field].required = True

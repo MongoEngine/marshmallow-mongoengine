@@ -49,7 +49,7 @@ class LineString(fields.Field):
     Marshmallow custom field to map with :class Mongoengine.LineStringField:
     """
 
-    def _deserialize(self, value, attr, data):
+    def _deserialize(self, value, attr, data, **kwargs):
         try:
             coordinates = []
 
