@@ -122,7 +122,7 @@ class GenericReference(fields.Field):
         # Only return the pk of the document for serialization
         if value is None:
             return missing
-        return value.pk
+        return str(value.pk) if isinstance(value.pk, bson.ObjectId) else value.pk
 
 
 class GenericEmbeddedDocument(fields.Field):
