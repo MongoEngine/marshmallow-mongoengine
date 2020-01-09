@@ -155,8 +155,7 @@ def register_field(mongo_field_cls, marshmallow_field_cls,
     register_field_builder(mongo_field_cls, Builder)
 
 
-register_field(me.fields.BinaryField, ma_fields.Integer,
-               available_params=(params.SizeParam,))
+register_field(me.fields.BinaryField, ma_fields.Raw)
 register_field(me.fields.BooleanField, ma_fields.Boolean)
 register_field(me.fields.ComplexDateTimeField, ma_fields.DateTime)
 register_field(me.fields.DateTimeField, ma_fields.DateTime)
