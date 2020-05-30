@@ -14,7 +14,7 @@ install:
 - pip install -r dev-requirements.txt
 - pip install -U .[$MARSHMALLOW_BACKEND]
 before_script:
-- flake8 .
+- black --check marshmallow_mongoengine
 script: py.test --cov=marshmallow_mongoengine
 after_success:
 - coveralls
