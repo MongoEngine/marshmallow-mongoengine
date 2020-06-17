@@ -31,14 +31,16 @@ class SchemaOpts(ma.SchemaOpts):
 
     def __init__(self, meta, *args, **kwargs):
         super(SchemaOpts, self).__init__(meta, *args, **kwargs)
-        self.model = getattr(meta, 'model', None)
+        self.model = getattr(meta, "model", None)
         if self.model and not issubclass(self.model, BaseDocument):
-            raise ValueError("`model` must be a subclass of mongoengine.base.BaseDocument")
-        self.model_fields_kwargs = getattr(meta, 'model_fields_kwargs', {})
-        self.model_dump_only_pk = getattr(meta, 'model_dump_only_pk', False)
-        self.model_converter = getattr(meta, 'model_converter', ModelConverter)
-        self.model_build_obj = getattr(meta, 'model_build_obj', True)
-        self.model_skip_values = getattr(meta, 'model_skip_values', DEFAULT_SKIP_VALUES)
+            raise ValueError(
+                "`model` must be a subclass of mongoengine.base.BaseDocument"
+            )
+        self.model_fields_kwargs = getattr(meta, "model_fields_kwargs", {})
+        self.model_dump_only_pk = getattr(meta, "model_dump_only_pk", False)
+        self.model_converter = getattr(meta, "model_converter", ModelConverter)
+        self.model_build_obj = getattr(meta, "model_build_obj", True)
+        self.model_skip_values = getattr(meta, "model_skip_values", DEFAULT_SKIP_VALUES)
 
 
 class SchemaMeta(ma.schema.SchemaMeta):
@@ -50,20 +52,17 @@ class SchemaMeta(ma.schema.SchemaMeta):
         """Updates declared fields with fields converted from the
         Mongoengine model passed as the `model` class Meta option.
         """
-        declared_fields = kwargs.get('dict_class', dict)()
+        declared_fields = kwargs.get("dict_class", dict)()
         # Generate the fields provided through inheritance
         opts = klass.opts
-        model = getattr(opts, 'model', None)
+        model = getattr(opts, "model", None)
         if model:
             converter = opts.model_converter()
-            declared_fields.update(converter.fields_for_model(
-                model,
-                fields=opts.fields
-            ))
+            declared_fields.update(
+                converter.fields_for_model(model, fields=opts.fields)
+            )
         # Generate the fields provided in the current class
-        base_fields = super(SchemaMeta, mcs).get_declared_fields(
-            klass, *args, **kwargs
-        )
+        base_fields = super(SchemaMeta, mcs).get_declared_fields(klass, *args, **kwargs)
         declared_fields.update(base_fields)
         # Customize fields with provided kwargs
         for field_name, field_kwargs in klass.opts.model_fields_kwargs.items():
@@ -78,7 +77,7 @@ class SchemaMeta(ma.schema.SchemaMeta):
             # If primary key is automatically generated (nominal case), we
             # must make sure this field is read-only
             if opts.model._auto_id_field is True:
-                field_name = opts.model._meta['id_field']
+                field_name = opts.model._meta["id_field"]
                 id_field = declared_fields.get(field_name)
                 if id_field:
                     # Copy to prevent alteration of a possible parent class's field
@@ -100,15 +99,13 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
             class Meta:
                 model = User
     """
+
     OPTIONS_CLASS = SchemaOpts
 
     @ma.post_dump
     def _remove_skip_values(self, data):
         to_skip = self.opts.model_skip_values
-        return {
-            key: value for key, value in data.items()
-            if value not in to_skip
-        }
+        return {key: value for key, value in data.items() if value not in to_skip}
 
     @ma.post_load
     def _make_object(self, data):

@@ -2,6 +2,11 @@
 History
 =======
 
+0.11.0 (2020-05-30)
+-------------------
+ - Drop support for Python 2.7
+ - Fix requirement on marshmallow (version 3 is not supported)
+
 0.10.0 (2017-11-06)
 -------------------
  - Add support for mongoengine.LazyReferenceField and mongoengine.GenericLazyReferenceField

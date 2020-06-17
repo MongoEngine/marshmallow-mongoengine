@@ -3,9 +3,7 @@ language: python
 services:
 - mongodb
 python:
-- '3.6'
-- '3.5'
-- '2.7'
+- '3.8'
 env:
 - MARSHMALLOW_BACKEND=marshmallow
 - MARSHMALLOW_BACKEND=toasted
@@ -14,15 +12,15 @@ install:
 - pip install -r dev-requirements.txt
 - pip install -U .[$MARSHMALLOW_BACKEND]
 before_script:
-- flake8 .
+- black --check marshmallow_mongoengine
 script: py.test --cov=marshmallow_mongoengine
 after_success:
-  - coveralls
+- coveralls
 deploy:
   provider: pypi
-  user: touilleMan
+  user: __token__
   on:
     tags: true
     repo: MongoEngine/marshmallow-mongoengine
   password:
-    secure: "ebFK8FGv7DUpMYd2pufm8R72RCRZAmIiUmfZK4jCt9UkwwlCwUtFYM+/JJ1OxtZSSntCy0kPid1+Fq2KmA6Fp6jd+aFwgUGOHhA1GzggIVf0OWtjmN+ypuJCFgaYOl99zOrmALc5yZ3KpMaJmLENmGVtwhDnIf4MHZEXRa4mZtHvRY3rY5p/060l+0NE1bslm32yNf1Teg8/+f6ljM3b1TkgGi3kDEJ389GE085vdyKk3dgXkfgujDCBTQNTpbDh7k4TMsSCv3F0DLJz6zsL2f7KdDH7UWvUOogyhovGh7VszIXFCdP8m8JoI/61N8wRKaBeq+jpcxvqFpaNg2EgUdQ7fkfAdPxmEBV6Sgt4Dnwapqi5nAylICJxu1CTFR9v0RN76O8XqqEvBVM4YXiD2Q2KaF/I6yTObQtGiwJRxMbX27YrycsNOKOpyuhYUFOx6xDHsRs9dh3v3o1k24lK1xaMsfy2XKf72FhN3dexNe+BREpswBkP6JNeb6MmrfrgGMWEXhAgWDjPc+UmAq+wiqZxUcMFm9IB7C/dWFMDJm/D1Xz/cwOBcuR25syQPvBd93dh6wvwQ17cjq5jvC/L5eD3Qe4Mpp8KJhqOuI3Mx51GGej2/z3iP8r+t8jW/UuO641AHMSyxtdYvyc24B5NDCbYYjb/xC65NeWiEd+Mpos="
+    secure: YHBMX30vPdCbPnTclJwWN2PMcRKusvixBpqjrZh6UGhMnVWPwFXUl1RnwuNFVVSK1Wc132TS4jEot254dn6wYY03veMC7FEd5A5njNhtM6LRY+2q/avDYKcPXp4sNOIfLmtJ+o+LTM1Se4Ja+no+8VbbbcM5AFoYrXUGZqx+bQ4ujigIjfLWuAY6PD17lHrPBXPsxM4+iZYbfXe20FAkVoN6pREgQBhfvHALfHWzue6BKnUmBJNNwlw7aUsb5E+6hpXbGPx4PIad3k1CYoQqo/7+89zUndCPoH/anbYj8mkNSSq7xHHT0PxfrUMy/ugR8TdSUixmHCgeYkQgjcikHxYqlK26gVPieFgU+XDy5Yt618UjbyqiU5l92hffaxNYexSFUdWz+WvQPDIp2GolzffA6oTEt1ipgKhCDdUh4Pt7QCJCesw7VUFmSMbjs78xqFsbW45+YRDwSuElvOuIbpK9tQIF15XP6OOPeXCo4+9jahwUn1OLftUv+hYv7Gsf7wgsddi9M0DQ1oWZTwgvakCdZ1a6oXbU+JvkTVMZxlDrl0EJQbOKqUt00780JlTgTYnPlfsO8Ub9ENkwk/nZkniOq/iCRFYhP85bVAledmiyj8tFA8rtNmZbtW/J7x5bedB4fTcjNko8oJEw6H1udPRUlikviul3zK3qLrriH4c=

@@ -9,12 +9,11 @@ from marshmallow.fields import *  # noqa
 
 # ...and add custom ones for mongoengine
 class ObjectId(fields.Field):
-
     def _deserialize(self, value, attr, data):
         try:
             return bson.ObjectId(value)
         except Exception:
-            raise ValidationError('invalid ObjectId `%s`' % value)
+            raise ValidationError("invalid ObjectId `%s`" % value)
 
     def _serialize(self, value, attr, obj):
         if value is None:
@@ -23,23 +22,18 @@ class ObjectId(fields.Field):
 
 
 class Point(fields.Field):
-
     def _deserialize(self, value, attr, data):
         try:
             return dict(
-                type='Point',
-                coordinates=[float(value['x']), float(value['y'])]
+                type="Point", coordinates=[float(value["x"]), float(value["y"])]
             )
         except Exception:
-            raise ValidationError('invalid Point `%s`' % value)
+            raise ValidationError("invalid Point `%s`" % value)
 
     def _serialize(self, value, attr, obj):
         if value is None:
             return missing
-        return dict(
-            x=value['coordinates'][0],
-            y=value['coordinates'][1]
-        )
+        return dict(x=value["coordinates"][0], y=value["coordinates"][1])
 
 
 class Reference(fields.Field):
@@ -62,9 +56,15 @@ class Reference(fields.Field):
         document_type = self.document_type
         try:
             return document_type.objects.get(pk=value)
-        except (document_type.DoesNotExist, MongoValidationError, ValueError, TypeError):
-            raise ValidationError('unknown document %s `%s`' %
-                                  (document_type._class_name, value))
+        except (
+            document_type.DoesNotExist,
+            MongoValidationError,
+            ValueError,
+            TypeError,
+        ):
+            raise ValidationError(
+                "unknown document %s `%s`" % (document_type._class_name, value)
+            )
         return value
 
     def _serialize(self, value, attr, obj):
@@ -87,11 +87,11 @@ class GenericReference(fields.Field):
 
     def __init__(self, *args, **kwargs):
         self.document_class_choices = []
-        choices = kwargs.pop('choices', None)
+        choices = kwargs.pop("choices", None)
         if choices:
             # Temporary fix for https://github.com/MongoEngine/mongoengine/pull/1060
             for choice in choices:
-                if hasattr(choice, '_class_name'):
+                if hasattr(choice, "_class_name"):
                     self.document_class_choices.append(choice._class_name)
                 else:
                     self.document_class_choices.append(choice)
@@ -100,13 +100,18 @@ class GenericReference(fields.Field):
     def _deserialize(self, value, attr, data):
         # To deserialize a generic reference, we need a _cls field in addition
         # with the id field
-        if not isinstance(value, dict) or not value.get('id') or not value.get('_cls'):
+        if not isinstance(value, dict) or not value.get("id") or not value.get("_cls"):
             raise ValidationError("Need a dict with 'id' and '_cls' fields")
-        doc_id = value['id']
-        doc_cls_name = value['_cls']
-        if self.document_class_choices and doc_cls_name not in self.document_class_choices:
-            raise ValidationError("Invalid _cls field `%s`, must be one of %s" %
-                                  (doc_cls_name, self.document_class_choices))
+        doc_id = value["id"]
+        doc_cls_name = value["_cls"]
+        if (
+            self.document_class_choices
+            and doc_cls_name not in self.document_class_choices
+        ):
+            raise ValidationError(
+                "Invalid _cls field `%s`, must be one of %s"
+                % (doc_cls_name, self.document_class_choices)
+            )
         try:
             doc_cls = get_document(doc_cls_name)
         except NotRegistered:
@@ -114,8 +119,7 @@ class GenericReference(fields.Field):
         try:
             doc = doc_cls.objects.get(pk=doc_id)
         except (doc_cls.DoesNotExist, MongoValidationError, ValueError, TypeError):
-            raise ValidationError('unknown document %s `%s`' %
-                                  (doc_cls_name, value))
+            raise ValidationError("unknown document %s `%s`" % (doc_cls_name, value))
         return doc
 
     def _serialize(self, value, attr, obj):
@@ -141,9 +145,9 @@ class GenericEmbeddedDocument(fields.Field):
         from marshmallow_mongoengine.schema import ModelSchema
 
         class NestedSchema(ModelSchema):
-
             class Meta:
                 model = type(value)
+
         data, errors = NestedSchema().dump(value)
         if errors:
             raise ValidationError(errors)
@@ -173,13 +177,13 @@ class Map(fields.Field):
 
     def _serialize(self, value, attr, obj):
         if self.schema:
-            return self._schema_process('dump', value)
+            return self._schema_process("dump", value)
         else:
             return value
 
     def _deserialize(self, value, attr, data):
         if self.schema:
-            return self._schema_process('load', value)
+            return self._schema_process("load", value)
         else:
             return value
 
