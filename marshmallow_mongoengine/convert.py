@@ -18,8 +18,7 @@ class ModelConverter(object):
             if fields and field_name not in fields:
                 continue
             if field_name in fields_kwargs:
-                field_ma_cls = self.convert_field(field_me,
-                                                  **fields_kwargs[field_name])
+                field_ma_cls = self.convert_field(field_me, **fields_kwargs[field_name])
             else:
                 field_ma_cls = self.convert_field(field_me)
             if field_ma_cls:

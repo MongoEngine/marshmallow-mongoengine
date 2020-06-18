@@ -10,12 +10,11 @@ from marshmallow.fields import *  # noqa
 
 
 class ObjectId(fields.Field):
-
     def _deserialize(self, value, attr, data, **kwargs):
         try:
             return bson.ObjectId(value)
         except BSONError:
-            raise ValidationError('invalid ObjectId `%s`' % value)
+            raise ValidationError("invalid ObjectId `%s`" % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value is None:
@@ -24,23 +23,18 @@ class ObjectId(fields.Field):
 
 
 class Point(fields.Field):
-
     def _deserialize(self, value, attr, data, **kwargs):
         try:
             return dict(
-                type='Point',
-                coordinates=[float(value['x']), float(value['y'])]
+                type="Point", coordinates=[float(value["x"]), float(value["y"])]
             )
-        except BSONError:
-            raise ValidationError('invalid Point `%s`' % value)
+        except Exception:
+            raise ValidationError("invalid Point `%s`" % value)
 
     def _serialize(self, value, attr, obj, **kwargs):
         if value is None:
             return missing
-        return dict(
-            x=value['coordinates'][0],
-            y=value['coordinates'][1]
-        )
+        return dict(x=value["coordinates"][0], y=value["coordinates"][1])
 
 
 class LineString(fields.Field):
@@ -53,21 +47,16 @@ class LineString(fields.Field):
         try:
             coordinates = []
 
-            for x, y in value['coordinates']:
+            for x, y in value["coordinates"]:
                 coordinates.append([float(x), float(y)])
-            return dict(
-                type='LineString',
-                coordinates=coordinates
-            )
+            return dict(type="LineString", coordinates=coordinates)
         except Exception:
-            raise ValidationError('invalid value data `%s`' % value)
+            raise ValidationError("invalid value data `%s`" % value)
 
     def _serialize(self, value, attr, obj):
         if value is None:
             return missing
-        return dict(
-            coordinates=value['coordinates']
-        )
+        return dict(coordinates=value["coordinates"])
 
 
 class Reference(fields.Field):
@@ -90,16 +79,26 @@ class Reference(fields.Field):
         document_type = self.document_type
         try:
             return document_type.objects.get(pk=value)
-        except (document_type.DoesNotExist, MongoValidationError, ValueError, TypeError):
-            raise ValidationError('unknown document %s `%s`' %
-                                  (document_type._class_name, value))
+        except (
+            document_type.DoesNotExist,
+            MongoValidationError,
+            ValueError,
+            TypeError,
+        ):
+            raise ValidationError(
+                "unknown document %s `%s`" % (document_type._class_name, value)
+            )
         return value
 
     def _serialize(self, value, attr, obj, **kwargs):
         # Only return the pk of the document for serialization
         if value is None:
             return missing
-        return str(value.pk) if isinstance(value.pk, (bson.ObjectId, uuid.UUID)) else value.pk
+        return (
+            str(value.pk)
+            if isinstance(value.pk, (bson.ObjectId, uuid.UUID))
+            else value.pk
+        )
 
 
 class GenericReference(fields.Field):
@@ -115,11 +114,11 @@ class GenericReference(fields.Field):
 
     def __init__(self, *args, **kwargs):
         self.document_class_choices = []
-        choices = kwargs.pop('choices', None)
+        choices = kwargs.pop("choices", None)
         if choices:
             # Temporary fix for https://github.com/MongoEngine/mongoengine/pull/1060
             for choice in choices:
-                if hasattr(choice, '_class_name'):
+                if hasattr(choice, "_class_name"):
                     self.document_class_choices.append(choice._class_name)
                 else:
                     self.document_class_choices.append(choice)
@@ -128,13 +127,18 @@ class GenericReference(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         # To deserialize a generic reference, we need a _cls field in addition
         # with the id field
-        if not isinstance(value, dict) or not value.get('id') or not value.get('_cls'):
+        if not isinstance(value, dict) or not value.get("id") or not value.get("_cls"):
             raise ValidationError("Need a dict with 'id' and '_cls' fields")
-        doc_id = value['id']
-        doc_cls_name = value['_cls']
-        if self.document_class_choices and doc_cls_name not in self.document_class_choices:
-            raise ValidationError("Invalid _cls field `%s`, must be one of %s" %
-                                  (doc_cls_name, self.document_class_choices))
+        doc_id = value["id"]
+        doc_cls_name = value["_cls"]
+        if (
+            self.document_class_choices
+            and doc_cls_name not in self.document_class_choices
+        ):
+            raise ValidationError(
+                "Invalid _cls field `%s`, must be one of %s"
+                % (doc_cls_name, self.document_class_choices)
+            )
         try:
             doc_cls = get_document(doc_cls_name)
         except NotRegistered:
@@ -142,8 +146,7 @@ class GenericReference(fields.Field):
         try:
             doc = doc_cls.objects.get(pk=doc_id)
         except (doc_cls.DoesNotExist, MongoValidationError, ValueError, TypeError):
-            raise ValidationError('unknown document %s `%s`' %
-                                  (doc_cls_name, value))
+            raise ValidationError("unknown document %s `%s`" % (doc_cls_name, value))
         return doc
 
     def _serialize(self, value, attr, obj, **kwargs):
@@ -169,7 +172,6 @@ class GenericEmbeddedDocument(fields.Field):
         from marshmallow_mongoengine.schema import ModelSchema
 
         class NestedSchema(ModelSchema):
-
             class Meta:
                 model = type(value)
 
@@ -196,13 +198,13 @@ class Map(fields.Field):
 
     def _serialize(self, value, attr, obj, **kwargs):
         if self.schema:
-            return self._schema_process('dump', value)
+            return self._schema_process("dump", value)
         else:
             return value
 
     def _deserialize(self, value, attr, data, **kwargs):
         if self.schema:
-            return self._schema_process('load', value)
+            return self._schema_process("load", value)
         else:
             return value
 
