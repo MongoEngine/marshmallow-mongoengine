@@ -116,29 +116,29 @@ class ModelSchema(with_metaclass(SchemaMeta, ma.Schema)):
 
     def update(self, obj, data):
         """Helper function to update an already existing document
-    instead of creating a new one.
-    :param obj: Mongoengine Document to update
-    :param data: incomming payload to deserialize
-    :return: an :class UnmarshallResult:
+        instead of creating a new one.
+        :param obj: Mongoengine Document to update
+        :param data: incomming payload to deserialize
+        :return: an :class UnmarshallResult:
 
-    Example: ::
+        Example: ::
 
-        from marshmallow_mongoengine import ModelSchema
-        from mymodels import User
+            from marshmallow_mongoengine import ModelSchema
+            from mymodels import User
 
-        class UserSchema(ModelSchema):
-            class Meta:
-                model = User
+            class UserSchema(ModelSchema):
+                class Meta:
+                    model = User
 
-        def update_obj(id, payload):
-            user = User.objects(id=id).first()
-            result = UserSchema().update(user, payload)
-            result.data is user # True
+            def update_obj(id, payload):
+                user = User.objects(id=id).first()
+                result = UserSchema().update(user, payload)
+                result.data is user # True
 
-    Note:
+        Note:
 
-        Given the update is done on a existing object, the required param
-        on the fields is ignored
+            Given the update is done on a existing object, the required param
+            on the fields is ignored
         """
         # TODO: find a cleaner way to skip required validation on update
         required_fields = [k for k, f in self.fields.items() if f.required]
