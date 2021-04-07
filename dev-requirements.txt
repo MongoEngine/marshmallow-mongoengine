@@ -1,5 +1,5 @@
 invoke
-flake8
+black==20.8b1
 
 # testing
 pytest

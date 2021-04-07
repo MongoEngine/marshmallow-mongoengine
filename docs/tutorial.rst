@@ -44,7 +44,7 @@ Finally it's time to use our schema to load/dump documents:
 .. code-block:: python
 
     >>> user_schema = UserSchema()
-    >>> u, errors = user.schema.load({
+    >>> u = user_schema.load({
     ...     "name": "John Doe", "email": "jdoe@example.com", "password": "123456",
     ...     "tasks": [{"content": "Find a proper password"}]})
     >>> u.save()
@@ -54,7 +54,7 @@ Finally it's time to use our schema to load/dump documents:
     >>> u.tasks
     [<Task: Task object>]
     >>> user_schema.dump(u)
-    UnmarshalResult(data={"name": "John Doe", "email": "jdoe@example.com", "password": "123456", "tasks": [{"content": "Find a proper password", "priority": 1}]}, errors={})
+    {"name": "John Doe", "email": "jdoe@example.com", "password": "123456", "tasks": [{"content": "Find a proper password", "priority": 1}]}
 
 
 If the document already exists, we can update it using `update`
@@ -62,7 +62,7 @@ If the document already exists, we can update it using `update`
 .. code-block:: python
 
     >>> u
-    >>> u2, errors = user.schema.update(u, {"name": "Jacques Faite"})
+    >>> u2 = user.schema.update(u, {"name": "Jacques Faite"})
     >>> u2 is u
     True
     >>> u2.name
@@ -111,7 +111,7 @@ Now the schema will do all the integrity checks, but after that will stop and re
 .. code-block:: python
 
     >>> user_schema = UserSchemaJSON()
-    >>> data, errors = user.schema.load({"name": "John Doe", "email": "jdoe@example.com", "password": "123456"})
+    >>> data = user_schema.load({"name": "John Doe", "email": "jdoe@example.com", "password": "123456"})
     >>> data
     {"name": "John Doe", "email": "jdoe@example.com", "password": "123456"}
     >>> data["password"] = hash_and_salt(data["password"]) # Alter the data
@@ -135,7 +135,7 @@ we only have to redefine the `property` field and we're done !
         class Meta:
             model = User
 
-        priority = ma.fields.method(serialize="_priority_serializer", deserialize="_priority_deserializer")
+        priority = ma.fields.Method(serialize="_priority_serializer", deserialize="_priority_deserializer")
 
         def _priority_serializer(self, obj):
             if obj.priority == 1:
@@ -152,6 +152,6 @@ we only have to redefine the `property` field and we're done !
     ...             tasks=[{"content": "Find a proper password"},
     ...                    {"content": "Learn to cook", "priority": 2},
     ...                    {"content": "Fix issues", "priority": 3}])
-    >>> dump, errors = user.schema.dump(user)
+    >>> dump = user_schema.dump(user)
     >>> dump
     {"name": "John Doe", "email": "jdoe@example.com", "tasks": [{"content": "Find a proper password", "priority": "High"}, {"content": "Learn to cook", "priority": "Medium"}, {"content": "Fix issues", "priority": "Will do tomorrow"}]}

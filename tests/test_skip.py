@@ -31,23 +31,23 @@ class TestSkip(BaseTest):
             field_not_empty = me.StringField(default='value')
             field_empty = me.StringField()
             list_empty = me.ListField(me.StringField())
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
         doc = Doc()
-        dump = DocSchema().dump(doc)
-        assert not dump.errors
-        assert dump.data == {'field_not_empty': 'value'}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'field_not_empty': 'value'}
 
     def test_disable_skip_none_field(self):
         class Doc(me.Document):
             field_empty = me.StringField()
             list_empty = me.ListField(me.StringField())
+
         class DocSchema(ModelSchema):
             class Meta:
                 model = Doc
                 model_skip_values = ()
         doc = Doc()
-        data, errors = DocSchema().dump(doc)
-        assert not errors
-        assert data == {'field_empty': None, 'list_empty': []}
+        dump_data = DocSchema().dump(doc)
+        assert dump_data == {'field_empty': None, 'list_empty': []}

@@ -2,6 +2,17 @@
 History
 =======
 
+0.30.0 (2019-TBR)
+-------------------
+ - Add support for marshmallow v3
+ - Remove support for python2 since mm-v3 needs >= p35.
+ - Removed support for toasted since doesn't support mm-v3
+
+0.11.0 (2020-05-30)
+-------------------
+ - Drop support for Python 2.7
+ - Fix requirement on marshmallow (version 3 is not supported)
+
 0.10.0 (2017-11-06)
 -------------------
  - Add support for mongoengine.LazyReferenceField and mongoengine.GenericLazyReferenceField
