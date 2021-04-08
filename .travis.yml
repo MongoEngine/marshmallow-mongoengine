@@ -3,14 +3,11 @@ language: python
 services:
 - mongodb
 python:
-- '3.8'
-env:
-- MARSHMALLOW_BACKEND=marshmallow
-- MARSHMALLOW_BACKEND=toasted
+- '3.9'
 install:
 - pip install coveralls pytest-cov
 - pip install -r dev-requirements.txt
-- pip install -U .[$MARSHMALLOW_BACKEND]
+- pip install -U .
 before_script:
 - black --check marshmallow_mongoengine
 script: py.test --cov=marshmallow_mongoengine
