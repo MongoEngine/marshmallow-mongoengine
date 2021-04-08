@@ -149,7 +149,7 @@ def register_field(mongo_field_cls, marshmallow_field_cls, available_params=()):
     Bind a marshmallow field to it corresponding mongoengine field
     :param mongo_field_cls: Mongoengine Field
     :param marshmallow_field_cls: Marshmallow Field
-    :param available_params: List of :class marshmallow_mongoengine.cnoversion.params.MetaParam:
+    :param available_params: List of :class marshmallow_mongoengine.conversion.params.MetaParam:
         instances to import the mongoengine field config to marshmallow
     """
 
