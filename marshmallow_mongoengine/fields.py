@@ -78,6 +78,9 @@ class Reference(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         document_type = self.document_type
         try:
+            if isinstance(value, dict):
+                return document_type(**value)
+
             return document_type.objects.get(pk=value)
         except (
             document_type.DoesNotExist,

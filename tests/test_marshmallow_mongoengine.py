@@ -323,6 +323,28 @@ class TestModelSchema(BaseTest):
         assert isinstance(load_data.prereqs, dict)
         assert load_data.prereqs == course.prereqs
 
+    def test_embedded_reference_loading(self, models, schemas):
+        course_schema = schemas.CourseSchema()
+        payload = {
+            'students': [{
+                'profile_uri': 'http://www.imdb.com/name/nm0000417/',
+                'current_school': '6074ef2a5d05b25156aba5d0',
+                'age': 18,
+                'full_name': 'Donald Duck',
+                'email': 'dd@disney.com'
+            }],
+            'id': 222,
+            'name': 'Algebra',
+            'level': 'Secondary',
+            'grade': 12,
+            'cost': 200,
+            'prereqs': {'age': 18},
+            'started': '2021-04-22T00:00:00'
+        }
+        course_load = course_schema.load(payload)
+        assert type(course_load) == models.Course
+        assert type(course_load.students[0]) == models.Student
+
     def test_fields_option(self, student, models):
         class StudentSchema(ModelSchema):
 
