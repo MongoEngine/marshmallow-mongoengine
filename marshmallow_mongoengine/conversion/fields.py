@@ -219,4 +219,5 @@ register_field_builder(me.fields.SortedListField, ListBuilder)
 # me.fields.GeoPointField: ma_fields.GeoPoint,
 # me.fields.PolygonField: ma_fields.Polygon,
 # me.fields.MultiPointField: ma_fields.MultiPoint,
+# me.fields.MultiLineStringField: ma_fields.MultiLineString,
 # me.fields.MultiPolygonField: ma_fields.MultiPolygon,
