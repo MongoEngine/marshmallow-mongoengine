@@ -200,6 +200,7 @@ register_field(
 register_field(me.fields.ObjectIdField, ma_fields.ObjectId)
 register_field(me.fields.UUIDField, ma_fields.UUID)
 register_field(me.fields.PointField, ma_fields.Point)
+register_field(me.fields.LineStringField, ma_fields.LineString)
 register_field(
     me.fields.SequenceField, ma_fields.Integer, available_params=(params.SizeParam,)
 )  # TODO: handle value_decorator
