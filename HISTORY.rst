@@ -2,7 +2,20 @@
 History
 =======
 
-0.30.0 (2019-TBR)
+0.31.0 (2022-05-21)
+-------------------
+ - Add support for Date field
+ - Fix LineStringField support
+
+0.30.2 (2021-04-12)
+-------------------
+ - Allow loading embedded reference
+
+0.30.1 (2021-04-08)
+-------------------
+ - Misc  bugfixes
+
+0.30.0 (2020-06-17)
 -------------------
  - Add support for marshmallow v3
  - Remove support for python2 since mm-v3 needs >= p35.
