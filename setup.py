@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def read(fname):
@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="marshmallow-mongoengine",
-    version="0.30.2",
+    version="0.31.0",
     description="Mongoengine integration with the marshmallow "
                 "(de)serialization library",
     long_description=read("README.rst"),
