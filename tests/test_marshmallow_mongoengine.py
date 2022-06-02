@@ -10,7 +10,7 @@ from marshmallow.exceptions import ValidationError
 import pytest
 
 from . import exception_test
-from marshmallow_mongoengine import (ModelSchema, field_for, fields, fields_for_model)
+from marshmallow_mongoengine import ModelSchema, field_for, fields, fields_for_model
 
 TEST_DB = "marshmallow_mongoengine-test"
 db = me.connect(TEST_DB)
