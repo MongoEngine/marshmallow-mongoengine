@@ -81,7 +81,7 @@ In this case, returning the `password` field seems a pretty bad idea !
 We could solve this by using marshmallow's `Meta.exclude` list, but this means
 the field would be also excluded loading.
 
-The solution is to use the `Model.model_fields_kwargs` option to customize the field (de)seriliazers:
+The solution is to use the `Model.model_fields_kwargs` option for customizing the field (de)serializers:
 
 
 .. code-block:: python
@@ -92,8 +92,8 @@ The solution is to use the `Model.model_fields_kwargs` option to customize the f
             model_fields_kwargs = {'password': {'load_only': True}}
 
 
-No consider the loading process: for the moment we directly put the password in the password field.
-This is not a good idea - this is also a really poor idea to use "123456" as password ;-) - we should
+Now consider the loading process: For the moment we directly put the password in the password field.
+This is not a good idea - it is also a really poor idea to use "123456" as the password ;-) - we should
 first hash and salt it.
 
 To do that, we need to disable the build of the Mongoengine document by specifying `Model.model_build_obj`
@@ -122,11 +122,11 @@ Now the schema will do all the integrity checks, but after that will stop and re
 Customizing the schema
 ----------------------
 
-Now let say we want to customize the way the tasks are dumped, for example
-we want to return the field `priority` in a more understandably way than just a number
+Now let's say we want to customize the way the tasks are dumped. For example
+we want to return the field `priority` in a more understandable way than just a number
 (1 => "High", 2 => "Medium", 3 => "Will see tomorrow").
 
-Given we can shadow the auto-generated fields by defining our own in the Schema,
+Given that we can shadow the auto-generated fields by defining our own in the schema,
 we only have to redefine the `property` field and we're done !
 
 .. code-block:: python
