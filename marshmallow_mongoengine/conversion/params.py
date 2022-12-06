@@ -69,7 +69,7 @@ class DescriptionParam(MetaParam):
         super(DescriptionParam, self).__init__()
         description = getattr(field_me, "help_text", None)
         if description:
-            self.field_kwargs["description"] = description
+            self.field_kwargs.setdefault("metadata", {})["description"] = description
 
 
 class AllowNoneParam(MetaParam):
