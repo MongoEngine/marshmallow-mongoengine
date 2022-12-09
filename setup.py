@@ -20,7 +20,7 @@ setup(
     packages=find_packages(exclude=("test*",)),
     package_dir={"marshmallow-mongoengine": "marshmallow-mongoengine"},
     include_package_data=True,
-    install_requires=["mongoengine>=0.9.0", "marshmallow>=3.0.0b7"],
+    install_requires=["mongoengine>=0.9.0", "marshmallow>=3.10.0"],
     license="MIT",
     zip_safe=False,
     keywords="mongoengine marshmallow",
