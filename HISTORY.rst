@@ -2,6 +2,10 @@
 History
 =======
 
+0.31.1 (2022-12-09)
+-------------------
+ - Use metadata argument to avoid `marshmallow deprecation warning <https://marshmallow.readthedocs.io/en/stable/changelog.html#id15>`_
+
 0.31.0 (2022-05-21)
 -------------------
  - Add support for Date field
