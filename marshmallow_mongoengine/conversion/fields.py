@@ -68,7 +68,7 @@ class EnumBuilder(MetaFieldBuilder):
 
     def _get_marshmallow_field_cls(self):
         return functools.partial(
-            self.MARSHMALLOW_FIELD_CLS, self.mongoengine_field.enum
+            self.MARSHMALLOW_FIELD_CLS, self.mongoengine_field._enum_cls
         )
 
 
