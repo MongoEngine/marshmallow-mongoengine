@@ -175,7 +175,6 @@ register_field(me.fields.BooleanField, ma_fields.Boolean)
 register_field(me.fields.ComplexDateTimeField, ma_fields.DateTime)
 register_field(me.fields.DateField, ma_fields.Date)
 register_field(me.fields.DateTimeField, ma_fields.DateTime)
-register_field(me.fields.EnumField, ma_fields.Enum)
 register_field(
     me.fields.DecimalField,
     ma_fields.Decimal,
