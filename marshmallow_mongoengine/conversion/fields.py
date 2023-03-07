@@ -62,6 +62,16 @@ class ListBuilder(MetaFieldBuilder):
         )
 
 
+class EnumBuilder(MetaFieldBuilder):
+    AVAILABLE_PARAMS = ()
+    MARSHMALLOW_FIELD_CLS = ma_fields.Enum
+
+    def _get_marshmallow_field_cls(self):
+        return functools.partial(
+            self.MARSHMALLOW_FIELD_CLS, self.mongoengine_field.enum
+        )
+
+
 class ReferenceBuilder(MetaFieldBuilder):
     AVAILABLE_PARAMS = ()
     MARSHMALLOW_FIELD_CLS = ma_fields.Reference
@@ -217,6 +227,7 @@ register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
 register_field_builder(me.fields.ListField, ListBuilder)
 register_field_builder(me.fields.MapField, MapBuilder)
 register_field_builder(me.fields.SortedListField, ListBuilder)
+register_field_builder(me.fields.EnumField, EnumBuilder)
 # TODO: finish fields...
 # me.fields.GeoPointField: ma_fields.GeoPoint,
 # me.fields.PolygonField: ma_fields.Polygon,
