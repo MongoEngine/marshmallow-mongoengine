@@ -465,6 +465,7 @@ class TestModelSchema(BaseTest):
             date_created=datetime(2016, 2, 14),
             courses=None,
         ).save()
+
         # If specified, we don't load the id from the data
         class CustomSkipValuesStudentSchema(schemas.StudentSchema):
             class Meta:

@@ -262,6 +262,7 @@ class TestFields(BaseTest):
             {"generic": {"id": str(sub_doc_b.id), "_cls": sub_doc_b._class_name}}
         )
         assert load_data["generic"] == sub_doc_b
+
         # Teste choices param
         class DocOnlyA(me.Document):
             id = me.StringField(primary_key=True, default="main")
@@ -406,6 +407,7 @@ class TestFields(BaseTest):
         doc.reload()
         dump_data = DocSchema().dump(doc)
         assert dump_data == {"ref": 42, "id": "main"}
+
         # Try the same with reference document type passed as string
         class DocSchemaRefAsString(Schema):
             id = fields.String()
