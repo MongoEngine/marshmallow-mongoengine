@@ -2,6 +2,10 @@
 History
 =======
 
+0.31.2 (2023-03-13)
+-------------------
+ - Remove six usage to avoid `undeclared dependency <https://github.com/MongoEngine/marshmallow-mongoengine/issues/22>`_
+
 0.31.1 (2022-12-09)
 -------------------
  - Use metadata argument to avoid `marshmallow deprecation warning <https://marshmallow.readthedocs.io/en/stable/changelog.html#id15>`_
