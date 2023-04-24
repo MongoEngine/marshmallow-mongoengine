@@ -222,11 +222,11 @@ register_field(
 register_field(
     me.fields.URLField, ma_fields.URL, available_params=(params.LengthParam,)
 )
+register_field_builder(me.fields.EnumField, EnumBuilder)
 register_field_builder(me.fields.EmbeddedDocumentField, EmbeddedDocumentBuilder)
 register_field_builder(me.fields.ListField, ListBuilder)
 register_field_builder(me.fields.MapField, MapBuilder)
 register_field_builder(me.fields.SortedListField, ListBuilder)
-register_field_builder(me.fields.EnumField, EnumBuilder)
 # TODO: finish fields...
 # me.fields.GeoPointField: ma_fields.GeoPoint,
 # me.fields.PolygonField: ma_fields.Polygon,
