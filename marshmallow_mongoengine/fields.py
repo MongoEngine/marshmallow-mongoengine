@@ -38,7 +38,6 @@ class Point(fields.Field):
 
 
 class LineString(fields.Field):
-
     """
     Marshmallow custom field to map with :class Mongoengine.LineStringField:
     """
@@ -60,7 +59,6 @@ class LineString(fields.Field):
 
 
 class Reference(fields.Field):
-
     """
     Marshmallow custom field to map with :class Mongoengine.ReferenceField:
     """
@@ -105,7 +103,6 @@ class Reference(fields.Field):
 
 
 class GenericReference(fields.Field):
-
     """
     Marshmallow custom field to map with :class Mongoengine.GenericReferenceField:
 
@@ -160,7 +157,6 @@ class GenericReference(fields.Field):
 
 
 class GenericEmbeddedDocument(fields.Field):
-
     """
     Dynamic embedded document
     """
@@ -182,7 +178,6 @@ class GenericEmbeddedDocument(fields.Field):
 
 
 class Map(fields.Field):
-
     """
     Marshmallow custom field to map with :class Mongoengine.Map:
     """
@@ -213,7 +208,6 @@ class Map(fields.Field):
 
 
 class Skip(fields.Field):
-
     """
     Marshmallow custom field that just ignore the current field
     """

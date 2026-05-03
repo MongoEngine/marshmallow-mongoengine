@@ -31,7 +31,6 @@ def contains_validator(field, v_type):
 
 
 class AnotherIntegerField(me.IntField):
-
     """Use me to test if MRO works like we want"""
 
     pass
