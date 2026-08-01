@@ -3,7 +3,7 @@ black
 
 # testing
 pytest
-tox>=4.56.1
+tox>=4.58.0
 mock
 
 # packaging
